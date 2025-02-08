@@ -9,7 +9,7 @@
     },
     "scripts": {
         "db:generate": "prisma generate",
-        "db:migrate": "prisma migrate dev --skip-generate",
+        "db:migrate": "prisma migrate dev --name auto_mig --skip-generate",
         "db:deploy": "prisma migrate deploy"
     }
 }

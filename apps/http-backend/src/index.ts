@@ -1,28 +1,19 @@
 import express from "express";
-import z from "zod";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { createUserSchema, signInSchema, roomQuerySchema} from "@repo/common/commonPackages"
+import { userMiddleware } from "./middleware";
 
 const app = express();
 
 app.use(express.json());
 
 
-//zod schemas
-const userSchema = z.object({
-    username: z.string().min(1, "Username is Required!"),
-    password: z.string().min(6, "Password must be at least 6 character long!")
-});
-
-const roomQuerySchema = z.object({
-    id: z.string().uuid()
-});
-
 //routes
 
 app.post('/api/v1/signup', async (req, res) => {
     try {
-        const { username, password } = userSchema.parse(req.body);
+        const { username, password, name } = createUserSchema.parse(req.body);
         const hashedPassword: string = await bcrypt.hash(password, 10);
         //here comes the duplicate user logic check and hence the db logic!
         //if no then insert the user and the password to the db!
@@ -31,9 +22,8 @@ app.post('/api/v1/signup', async (req, res) => {
         })
     }
     catch(err) {
-        if (err instanceof z.ZodError) {
             res.status(400).json({
-                message: "Validation Error", errors: err.errors
+                message: "Validation Error"
             });
         }
         res.status(500).json({
@@ -65,8 +55,12 @@ app.post('/api/v1/signin', async (req, res) => {
     }
 })
 
-app.post('/api/v1/room', (req, res) => {
-    const validation = roomQuerySchema.safeParse(req.body);
+app.post('/api/v1/room', userMiddleware, (req, res) => {
+    // const validation = roomQuerySchema.safeParse(req.body);
+    //db call!
+    res.json({
+        message: "Connected to the Db!"
+    })
 })
 
 
