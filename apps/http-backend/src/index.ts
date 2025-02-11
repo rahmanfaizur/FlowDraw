@@ -13,7 +13,6 @@ app.use(express.json());
 
 
 //routes
-//@ts-ignore
 app.post('/api/v1/signup', async (req: Request, res : Response) => {
     try {
         const { email, name, password } = createUserSchema.parse(req.body);
@@ -22,14 +21,14 @@ app.post('/api/v1/signup', async (req: Request, res : Response) => {
         });
 
         if (existingUser) {
-            return res.status(400).json({
+            res.status(400).json({
                 message: "Email Already Exists!"
             })
         }
         // no duplicate email exists!
         const hashedPassword: string = await bcrypt.hash(password, 10);
         await prismaClient.user.create({
-            data: {email, name, password: hashedPassword}
+            parsedData: {email, name, password: hashedPassword}
         })
         res.status(201).json({
             message: "User created successfully!"
@@ -61,9 +60,9 @@ app.post('/api/v1/signin', async (req : Request, res: Response) => {
                 message: "User doesn't exists!"
             })
         }
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(password, user.password) ;
         if (!isPasswordValid) {
-            return res.status(401).json({
+            res.status(401).json({
                 message: "Invalid Credentials!"
             })
         }
@@ -74,9 +73,9 @@ app.post('/api/v1/signin', async (req : Request, res: Response) => {
         const token = jwt.sign(
             {userId: user.id, email: user.email},
             JWT_SECRET as string,
-            { expiresIn: "1h"}
+            // { expiresIn: "1h"} (omit this for dev)
         );
-        return res.status(200).json({
+        res.status(200).json({
             message: "Sign-in successful!",
             token
         })
@@ -88,12 +87,33 @@ app.post('/api/v1/signin', async (req : Request, res: Response) => {
     }
 })
 
-app.post('/api/v1/room', userMiddleware, (req, res) => {
-    // const validation = roomQuerySchema.safeParse(req.body);
+app.post('/api/v1/room', userMiddleware, async (req, res) => {
+    try {
+        const parsedData = roomQuerySchema.safeParse(req.body);
+    if (!parsedData.success) {
+        res.json({
+            message: "Incorrect Inputs!"
+        })
+        return;
+    }
+    //@ts-ignore TODO: FIX!
+    const userId = req.userId;
+    const room = await prismaClient.room.create({
+        data: {
+        slug: parsedData.data.name,
+        adminId: userId
+        }
+    })
     //db call!
     res.json({
-        message: "Connected to the Db!"
+        roomId: room.id
     })
+    }
+    catch (error) {
+        res.json({
+            message: "Validation Error!"
+        })
+    }
 })
 
 
