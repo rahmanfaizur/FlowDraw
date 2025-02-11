@@ -5,6 +5,7 @@ import { createUserSchema, signInSchema, roomQuerySchema} from "@repo/common/com
 import userMiddleware from "./middleware";
 import { prismaClient } from "@repo/db/client";
 import { Request, Response } from "express";
+import { JWT_SECRET } from "@repo/backend-common/config";
 
 const app = express();
 
@@ -72,7 +73,7 @@ app.post('/api/v1/signin', async (req : Request, res: Response) => {
         // jwt logic
         const token = jwt.sign(
             {userId: user.id, email: user.email},
-            process.env.JWT_SECRET as string,
+            JWT_SECRET as string,
             { expiresIn: "1h"}
         );
         return res.status(200).json({
