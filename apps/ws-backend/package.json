@@ -4,20 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc -b",
-    "start": "node dist/index.js",
-    "dev": "pnpm run build && pnpm run start"
-  },
+  "build": "esbuild ./src/index.ts --bundle --platform=node --format=esm --outfile=dist/index.mjs --sourcemap --external:stream",
+  "start": "node dist/index.mjs",
+  "dev": "pnpm run build && pnpm run start"
+}
+,
   "dependencies": {
     "jsonwebtoken": "^9.0.2",
     "ws": "^8.18.0"
   },
   "devDependencies": {
+    "@repo/backend-common": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
     "@types/jsonwebtoken": "^9.0.8",
     "@types/ws": "^8.5.14",
-    "@repo/typescript-config": "workspace:*",
-    "@repo/backend-common": "workspace:*"
+    "esbuild": "^0.25.0"
   },
   "keywords": [],
   "author": "",

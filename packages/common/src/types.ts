@@ -1,16 +1,16 @@
-import z from "zod";
+import { z } from 'zod';
 //zod schemas
 export const createUserSchema = z.object({
-    username: z.string().min(3, "Username is Required!"),
+    name: z.string().min(2, "Username is Required!"),
     password: z.string().min(5, "Password must be at least 6 character long!"),
-    name: z.string()
+    email: z.string().email()
 });
 
 export const signInSchema = z.object({
-    username: z.string().min(3).max(20),
+    email: z.string().email(),
     password: z.string().min(5, "Password must be at least 6 character long!")
 })
 
 export const roomQuerySchema = z.object({
-    name: z.string().min(3).max(20);
+    name: z.string().min(3).max(20)
 });
