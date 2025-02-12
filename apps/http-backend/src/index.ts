@@ -28,7 +28,7 @@ app.post('/api/v1/signup', async (req: Request, res : Response) => {
         // no duplicate email exists!
         const hashedPassword: string = await bcrypt.hash(password, 10);
         await prismaClient.user.create({
-            parsedData: {email, name, password: hashedPassword}
+            data: {email, name, password: hashedPassword}
         })
         res.status(201).json({
             message: "User created successfully!"
@@ -88,8 +88,7 @@ app.post('/api/v1/signin', async (req : Request, res: Response) => {
 })
 
 app.post('/api/v1/room', userMiddleware, async (req, res) => {
-    try {
-        const parsedData = roomQuerySchema.safeParse(req.body);
+    const parsedData = roomQuerySchema.safeParse(req.body);
     if (!parsedData.success) {
         res.json({
             message: "Incorrect Inputs!"
@@ -98,10 +97,11 @@ app.post('/api/v1/room', userMiddleware, async (req, res) => {
     }
     //@ts-ignore TODO: FIX!
     const userId = req.userId;
+try {
     const room = await prismaClient.room.create({
         data: {
-        slug: parsedData.data.name,
-        adminId: userId
+            slug: parsedData.data.name,
+            adminId: userId
         }
     })
     //db call!
@@ -116,6 +116,23 @@ app.post('/api/v1/room', userMiddleware, async (req, res) => {
     }
 })
 
+//TODO: Could improve a lot, like auth, ratelimiting and much more others!
+
+app.get("/api/v1/chats/:roomId", async (req, res) => {
+    const roomId = Number(req.params.roomId);
+    const messages = await prismaClient.chat.findMany({
+        where: {
+            roomId: roomId
+        },
+        orderBy: {
+            id: "desc"
+        },
+        take: 50
+    });
+    res.json({
+        messages
+    })
+})
 
 
 app.listen(3001, () => {

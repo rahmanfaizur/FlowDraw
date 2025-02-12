@@ -1,6 +1,7 @@
 import { WebSocketServer } from "ws";
-import jwt, { JwtPayload } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 import { JWT_SECRET }  from "@repo/backend-common/config";
+import { prismaClient } from "@repo/db/client";
 
 const wss = new WebSocketServer({port: 8080});
 
@@ -11,6 +12,7 @@ interface User {
     userId: string
 }
 
+const users : User[] = [];
 //The data is like this!
 // const users = [{
 //     userId: 1,
@@ -39,7 +41,6 @@ function checkUser(token: string) : string | null {
     }
     catch(error) {
         return null;
-        console.log("JWT Error!");
     }
 }
 
@@ -50,10 +51,7 @@ wss.on('connection', function connection(ws, request) {
         return;
     }
     const queryParams = new URLSearchParams(url.split('?')[1]);
-    const token = queryParams.get('token');
-    if (token == null) {
-        return;
-    }
+    const token = queryParams.get('token') || "";
     const userId = checkUser(token);
 
     if (userId == null) {
@@ -63,8 +61,6 @@ wss.on('connection', function connection(ws, request) {
 
     //Once a user is authenticated we reach here!
 
-    const users : User[] = [];
-
     users.push({
         userId,
         rooms: [],
@@ -72,10 +68,16 @@ wss.on('connection', function connection(ws, request) {
         ws
     })
 
-    ws.on('message', function message(data) {
+    ws.on('message', async function message(data) {
         //the data is usually a string hence we parse it as json!
-        const parsedData = JSON.parse(data as unknown as string);
+        // const parsedData = JSON.parse(data as unknown as string);
         //should check the type ideally! TODO:
+        let parsedData;
+        if (typeof data !== "string") {
+          parsedData = JSON.parse(data.toString());
+        } else {
+          parsedData = JSON.parse(data); // {type: "join-room", roomId: 1}
+        }
         
         //join room
         if (parsedData.type === "join_room") {
@@ -93,6 +95,8 @@ wss.on('connection', function connection(ws, request) {
             user.rooms = user.rooms.filter(x => x === parsedData.room);
         };
 
+        console.log("Message Recieved!");
+        console.log(parsedData);
         //could add persisting storage ie a db here!
         //a user needs to auth for a particular room! (could do)
 
@@ -101,6 +105,21 @@ wss.on('connection', function connection(ws, request) {
             const roomId = parsedData.roomId;
             const message = parsedData.message;
             //should put checks on the text and the length should also be checked!
+
+            if (!roomId || isNaN(Number(roomId))) {
+                console.error("Invalid roomId received:", roomId);
+                return;
+            }
+            
+
+            await prismaClient.chat.create({
+                data: {
+                    roomId: Number(roomId),
+                    message,
+                    userId
+                }
+            })
+            //ideally we should do a queue here! as this will be a lot slower!
 
             users.forEach(user => {
                 if (user.rooms.includes(roomId)) {
@@ -112,6 +131,5 @@ wss.on('connection', function connection(ws, request) {
                 }
             })
         }
-        // ws.send('pong');
     });
 });
