@@ -119,21 +119,41 @@ try {
 //TODO: Could improve a lot, like auth, ratelimiting and much more others!
 
 app.get("/api/v1/chats/:roomId", async (req, res) => {
-    const roomId = Number(req.params.roomId);
-    const messages = await prismaClient.chat.findMany({
-        where: {
-            roomId: roomId
-        },
-        orderBy: {
-            id: "desc"
-        },
-        take: 50
-    });
-    res.json({
-        messages
-    })
+    try {
+        const roomId = Number(req.params.roomId);
+        console.log(req.params.roomId);
+        const messages = await prismaClient.chat.findMany({
+            where: {
+                roomId: roomId
+            },
+            orderBy: {
+                id: "desc"
+            },
+            take: 50
+        });
+        res.json({
+            messages
+        })
+    }
+    catch (error) {
+        console.log(error);
+        res.json({
+            messages: []
+        })
+    }
 })
 
+app.get("/api/v1/room/:slug", async (req, res) => {
+    const slug = req.params.slug;
+    const room = await prismaClient.room.findFirst({
+        where: {
+            slug
+        }
+    });
+    res.json({
+        room
+    })
+})
 
 app.listen(3001, () => {
     console.log("connected to port 3001!");
