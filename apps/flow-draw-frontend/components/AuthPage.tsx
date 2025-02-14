@@ -5,7 +5,7 @@ export function AuthPage({isSignin} : {
     return <div className="w-screen h-screen flex justify-center items-center">
         <div className="p-2 m-2 bg-white rounded">
             <div>
-            <input type="text" name="" id="" placeholder="Email" />
+            <Input/>
             </div>
             <div>
             <input type="password" name="" id="" placeholder="Password" />
@@ -15,4 +15,13 @@ export function AuthPage({isSignin} : {
             }}>{isSignin ? "Sign in" : "Sign up"}</button>
         </div>
     </div>
+}
+
+
+function Input() {
+    return (
+        <div className="bg-white text-yellow-200">
+            <input type="text" name="" id="" />
+        </div>
+    )
 }
