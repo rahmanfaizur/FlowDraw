@@ -6,10 +6,13 @@ import userMiddleware from "./middleware";
 import { prismaClient } from "@repo/db/client";
 import { Request, Response } from "express";
 import { JWT_SECRET } from "@repo/backend-common/config";
+import cors from 'cors';
 
 const app = express();
 
 app.use(express.json());
+
+app.use(cors())
 
 
 //routes

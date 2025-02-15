@@ -74,7 +74,7 @@ wss.on('connection', function connection(ws, request) {
         //should check the type ideally! TODO:
         let parsedData;
         if (typeof data !== "string") {
-          parsedData = JSON.parse(data.toString());
+          parsedData = JSON.parse(data.toString()); //must pass as string!
         } else {
           parsedData = JSON.parse(data); // {type: "join-room", roomId: 1}
         }
@@ -95,8 +95,8 @@ wss.on('connection', function connection(ws, request) {
             user.rooms = user.rooms.filter(x => x === parsedData.room);
         };
 
-        console.log("Message Recieved!");
-        console.log(parsedData);
+        // console.log("Message Recieved!");
+        // console.log(parsedData);
         //could add persisting storage ie a db here!
         //a user needs to auth for a particular room! (could do)
 
