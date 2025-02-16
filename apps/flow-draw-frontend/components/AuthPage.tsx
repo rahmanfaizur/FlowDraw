@@ -1,5 +1,6 @@
 "use client"
-import Input from '@repo/ui/input'
+import Input from "../components/Input"
+import { Button } from "./Button";
 
 export function AuthPage({isSignin} : {
     isSignin: boolean
@@ -20,8 +21,10 @@ export function AuthPage({isSignin} : {
     <div className="flex-1 bg-white border-r-4 rounded-r-xl">
       <Input placeholder="Enter your email" /> 
       <Input placeholder="Enter your password" /> 
+      <Button></Button>
     </div>
   </div>
 </div>
       );      
 }
+
