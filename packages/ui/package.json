@@ -6,6 +6,7 @@
     "./button": "./src/button.tsx",
     "./card": "./src/card.tsx",
     "./code": "./src/code.tsx",
+    "./input": "./src/input.tsx",
     "./ui/styles": "./src/styles.css"
   },
   "scripts": {

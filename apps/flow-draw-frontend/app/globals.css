@@ -2,3 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+    .placeholder-style::placeholder {
+       padding: 5px 12px;
+       margin: 5px;
+    }
+  }
