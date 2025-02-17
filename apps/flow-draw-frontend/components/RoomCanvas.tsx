@@ -2,23 +2,31 @@
 import { WS_URL } from "@/config";
 import { useEffect, useState } from "react";
 import { Canvas } from "./Canvas";
-const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI0NTAzMGI1OC1jZTUxLTRjMTAtYjUzNS1jYTBmMWY4NTJiMmMiLCJlbWFpbCI6ImphbWVzQGdtYWlsLmNvbSIsImlhdCI6MTczOTM0MDEzOH0.QqSYSE9hqUit8qcyjlsWeV7lgXugcHlo9CEBDJaWgCQ';
+import { useRouter } from "next/navigation"; // Import useRouter
+
+const token = localStorage.getItem("token");
 
 export function RoomCanvas({roomId} : {roomId : string}) {
     const [socket, setSocket] = useState<WebSocket | null>(null);
+    const router = useRouter(); // Initialize useRouter
 
-    //this runs when component mounts!
+    // Check for token and redirect if not found
     useEffect(() => {
-        const ws = new WebSocket(`${WS_URL}?token=${token}`);
+        if (!token) {
+            alert("You need to sign in first."); // Show alert
+            router.push("/signin"); // Redirect to signin page
+        } else {
+            const ws = new WebSocket(`${WS_URL}?token=${token}`);
 
-        ws.onopen = () => {
-            setSocket(ws);
-            ws.send(JSON.stringify({
-                type: "join_room",
-                roomId: roomId
-            }))
+            ws.onopen = () => {
+                setSocket(ws);
+                ws.send(JSON.stringify({
+                    type: "join_room",
+                    roomId: roomId
+                }))
+            }
         }
-    })
+    }, [token, roomId, router]); // Add dependencies
 
     if (!socket) {
         return <div>
@@ -26,8 +34,7 @@ export function RoomCanvas({roomId} : {roomId : string}) {
         </div>
     }
 
-return <div>
-    <Canvas roomId={roomId} socket={socket}></Canvas>
-</div>
-
+    return <div>
+        <Canvas roomId={roomId} socket={socket}></Canvas>
+    </div>
 }

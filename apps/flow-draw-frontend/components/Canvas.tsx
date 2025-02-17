@@ -1,6 +1,5 @@
-import { initDraw } from "@/app/draw";
 import { useEffect, useRef } from "react";
-import { useScript, useWindowSize } from "@uidotdev/usehooks";
+import { useWindowSize } from "@uidotdev/usehooks";
 import { IconButton } from "./IconButton";
 import { CircleIcon, Pencil, RectangleHorizontalIcon } from "lucide-react";
 import { useState } from "react";
@@ -30,7 +29,6 @@ export function Canvas({
 
     //not a good logic to play with the window object, should make make a class instead!
     useEffect(() => {
-        //@ts-ignore
         // window.selectedTool = selectedTool;
         //should switch this to class later and expose a fn!
         game?.setTool(selectedTool);
@@ -59,8 +57,8 @@ export function Canvas({
     );    
 }
 function TopBar({selectedTool, setSelectedTool} : {
-    selectedTool: Shape,
-    setSelectedTool: (s: Shape) => void
+    selectedTool: Tool,
+    setSelectedTool: (s: Tool) => void
 }) {
     return (
     <div className="absolute top-4 left-4 flex space-x-2">
