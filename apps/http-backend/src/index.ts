@@ -142,6 +142,24 @@ app.get("/api/v1/room/:slug", async (req, res) => {
     });
 });
 
+app.get("/api/v1/allrooms", async (req, res) => {
+    try {
+        const allRooms = await prismaClient.room.findMany({
+            select: {
+                slug: true // Select only the slug field
+            }
+        });
+        res.json({
+            rooms: allRooms // Return the array of room slugs
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "An error occurred while fetching rooms."
+        });
+    }
+});
+
 app.listen(3001, () => {
     console.log("connected to port 3001!");
 });

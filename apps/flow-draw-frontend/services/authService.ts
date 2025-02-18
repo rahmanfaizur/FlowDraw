@@ -80,3 +80,31 @@ export const getRoomId = async (requestBody: string) => {
         throw error; // Rethrow the error for further handling if needed
     }
 };
+
+export const getAllRooms = async () => {
+    try {
+        const response = await axios.get(`${HTTP_BACKEND}/allrooms`, {
+            headers: {
+                'Authorization': `${localStorage.getItem("token")}` // Include the token for authentication
+            }
+        });
+        return response.data.rooms; // Assuming the response contains a rooms field
+    } catch (error) {
+        console.error("Error fetching all rooms:", error);
+        throw error; // Rethrow the error for further handling if needed
+    }
+};
+
+export const getRoomBySlug = async (slug: string) => {
+    try {
+        const response = await axios.get(`${HTTP_BACKEND}/room/${slug}`, {
+            headers: {
+                'Authorization': `${localStorage.getItem("token")}` // Include the token for authentication
+            }
+        });
+        return response.data.room; // Assuming the response contains a room object
+    } catch (error) {
+        console.error("Error fetching room by slug:", error);
+        throw error; // Rethrow the error for further handling if needed
+    }
+};
