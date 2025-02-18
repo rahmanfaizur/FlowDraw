@@ -60,3 +60,23 @@ export const signin = async (email: string, password: string) => {
         throw new Error("An unexpected error occurred during signin");
     }
 };
+
+export const getRoomId = async (requestBody: string) => {
+    try {
+        const response = await axios.post(`${HTTP_BACKEND}/room`, { name: requestBody }, {
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `${localStorage.getItem("token")}` // Include the token for authentication
+            }
+        });
+        console.log("API Response:", response.data); // Log the API response
+        if (response.data) {
+            return response.data.roomId; // Assuming the response contains a roomId field
+        } else {
+            throw new Error("No data received from server");
+        }
+    } catch (error) {
+        console.error("Error fetching room ID:", error); // Log any errors
+        throw error; // Rethrow the error for further handling if needed
+    }
+};
