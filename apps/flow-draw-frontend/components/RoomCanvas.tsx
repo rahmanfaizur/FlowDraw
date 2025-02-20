@@ -8,6 +8,7 @@ const token = localStorage.getItem("token");
 
 export function RoomCanvas({roomId} : {roomId : string}) {
     const [socket, setSocket] = useState<WebSocket | null>(null);
+    const [strokeSize, setStrokeSize] = useState<number>(5); // Add stroke size state
     const router = useRouter(); // Initialize useRouter
 
     // Check for token and redirect if not found
@@ -34,7 +35,17 @@ export function RoomCanvas({roomId} : {roomId : string}) {
         </div>
     }
 
-    return <div>
-        <Canvas roomId={roomId} socket={socket}></Canvas>
-    </div>
+    return (
+        <div>
+            <Canvas roomId={roomId} socket={socket} strokeSize={strokeSize} /> {/* Pass stroke size */}
+            {/* Add a control to change stroke size */}
+            <input 
+                type="range" 
+                min="1" 
+                max="20" 
+                value={strokeSize} 
+                onChange={(e) => setStrokeSize(Number(e.target.value))} 
+            />
+        </div>
+    );
 }

@@ -15,9 +15,15 @@ type Shape = {
 } | {
     type: "pencil";
     points: Array<{x: number, y: number}>;
-    
     lineWidth: number;
     color: string;
+} | {
+    type: "ellipse";
+    centerX: number;
+    centerY: number;
+    radiusX: number;
+    radiusY: number;
+    rotation: number;
 }
 
 export class Game {
@@ -30,6 +36,7 @@ export class Game {
     private startY = 0;
     private selectedTool: Tool = "circle";
     private currentPencilPath: Shape | null = null;
+    private strokeSize: number = 5; // Default stroke size
 
     socket: WebSocket;
 
@@ -51,7 +58,7 @@ export class Game {
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
     }
 
-    setTool(tool: "circle" | "pencil" | "rect") {
+    setTool(tool: "circle" | "pencil" | "rect" | "ellipse") {
         this.selectedTool = tool;
     }
 
@@ -85,23 +92,21 @@ export class Game {
                 this.ctx.arc(shape.centerX, shape.centerY, Math.abs(shape.radius), 0, Math.PI * 2);
                 this.ctx.stroke();
                 this.ctx.closePath();
+            } else if (shape.type === "ellipse") {
+                this.ctx.beginPath();
+                this.ctx.ellipse(shape.centerX, shape.centerY, shape.radiusX, shape.radiusY, shape.rotation, 0, 2 * Math.PI);
+                this.ctx.stroke();
+                this.ctx.closePath();
             } else if (shape.type === "pencil") {
                 this.drawPencilPath(shape);
             }
         });
     }
 
-    private drawPencilPath(pencilPath: Shape) {
-        if (pencilPath.type !== "pencil" || !pencilPath.points || pencilPath.points.length < 2) return;
-        
-        this.ctx.save();
-        this.ctx.strokeStyle = pencilPath.color || "#FFFFFF";
-        this.ctx.lineWidth = pencilPath.lineWidth || 5;
-        this.ctx.lineJoin = "round";
-        this.ctx.lineCap = "round";
+    private drawPencilPath(path: { points: Array<{ x: number, y: number }> }) {
+        this.ctx.lineWidth = this.strokeSize; // Set line width
         this.ctx.beginPath();
-
-        const points = pencilPath.points;
+        const points = path.points;
         this.ctx.moveTo(points[0].x, points[0].y);
         
         for (let i = 1; i < points.length; i++) {
@@ -111,7 +116,6 @@ export class Game {
         
         this.ctx.stroke();
         this.ctx.closePath();
-        this.ctx.restore();
     }
 
     mouseDownHandler = (e: MouseEvent) => {
@@ -123,7 +127,7 @@ export class Game {
             this.currentPencilPath = {
                 type: "pencil",
                 points: [{x, y}],
-                lineWidth: 5,
+                lineWidth: this.strokeSize,
                 color: "#FFFFFF"
             };
             this.clicked = true;
@@ -141,13 +145,10 @@ export class Game {
 
         if (this.clicked) {
             if (this.selectedTool === "pencil" && this.currentPencilPath) {
-                // Add new point and draw temporary path
-                //@ts-ignore
                 this.currentPencilPath.points.push({x, y});
                 this.clearCanvas();
                 this.drawPencilPath(this.currentPencilPath);
             } else {
-                // Existing rectangle/circle preview logic
                 const width = x - this.startX;
                 const height = y - this.startY;
                 this.clearCanvas();
@@ -163,6 +164,15 @@ export class Game {
                     this.ctx.arc(centerX, centerY, Math.abs(radius), 0, Math.PI * 2);
                     this.ctx.stroke();
                     this.ctx.closePath();
+                } else if (this.selectedTool === "ellipse") {
+                    const radiusX = Math.abs(width) / 2;
+                    const radiusY = Math.abs(height) / 2;
+                    const centerX = this.startX + (width < 0 ? width : 0) + radiusX;
+                    const centerY = this.startY + (height < 0 ? height : 0) + radiusY;
+                    this.ctx.beginPath();
+                    this.ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+                    this.ctx.stroke();
+                    this.ctx.closePath();
                 }
             }
         }
@@ -170,18 +180,15 @@ export class Game {
 
     mouseUpHandler = (e: MouseEvent) => {
         if (this.selectedTool === "pencil" && this.currentPencilPath) {
-            //@ts-ignore
-            if (this.currentPencilPath.points.length > 1) {
-                this.existingShapes.push(this.currentPencilPath);
-                this.socket.send(JSON.stringify({
-                    type: "chat",
-                    message: JSON.stringify({ shape: this.currentPencilPath }),
-                    roomId: this.roomId
-                }));
-            }
+            this.currentPencilPath.lineWidth = this.strokeSize;
+            this.existingShapes.push(this.currentPencilPath);
+            this.socket.send(JSON.stringify({
+                type: "chat",
+                message: JSON.stringify({ shape: this.currentPencilPath }),
+                roomId: this.roomId
+            }));
             this.currentPencilPath = null;
         } else if (this.clicked) {
-            // Existing rectangle/circle finalization logic
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
@@ -204,6 +211,19 @@ export class Game {
                     radius: radius,
                     centerX: this.startX + radius,
                     centerY: this.startY + radius,
+                    lineWidth: this.strokeSize
+                };
+            } else if (this.selectedTool === "ellipse") {
+                const radiusX = Math.abs(width) / 2;
+                const radiusY = Math.abs(height) / 2;
+                shape = {
+                    type: "ellipse",
+                    centerX: this.startX + (width < 0 ? width : 0) + radiusX,
+                    centerY: this.startY + (height < 0 ? height : 0) + radiusY,
+                    radiusX: radiusX,
+                    radiusY: radiusY,
+                    rotation: 0,
+                    lineWidth: this.strokeSize
                 };
             }
             
@@ -223,5 +243,9 @@ export class Game {
         this.canvas.addEventListener("mousedown", this.mouseDownHandler);
         this.canvas.addEventListener("mouseup", this.mouseUpHandler);
         this.canvas.addEventListener("mousemove", this.mouseMoveHandler);
+    }
+
+    setStrokeSize(size: number) {
+        this.strokeSize = size;
     }
 }

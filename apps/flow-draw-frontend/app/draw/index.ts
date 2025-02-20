@@ -1,148 +1,177 @@
-import { HTTP_BACKEND } from "@/config";
-import axios from "axios";
+// import { HTTP_BACKEND } from "@/config";
+// import axios from "axios";
 
-type Shape = {
-    type: "rect";
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-} | {
-    type: "circle";
-    centerX: number;
-    centerY: number;
-    radius: number;
-} | {
-    type: "pencil";
-    startX: number;
-    startY: number;
-    endX: number;
-    endY: number;
-}
+// type Shape = {
+//     type: "rect";
+//     x: number;
+//     y: number;
+//     width: number;
+//     height: number;
+// } | {
+//     type: "circle";
+//     centerX: number;
+//     centerY: number;
+//     radius: number;
+// } | {
+//     type: "pencil";
+//     startX: number;
+//     startY: number;
+//     endX: number;
+//     endY: number;
+// } | {
+//     type: "ellipse";
+//     centerX: number;
+//     centerY: number;
+//     radiusX: number;
+//     radiusY: number;
+//     rotation: number;
+// }
 
-export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
-    const ctx = canvas.getContext("2d");
+// export async function initDraw(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
+//     const ctx = canvas.getContext("2d");
 
-    let existingShapes: Shape[] = await getExistingShapes(roomId)
+//     let existingShapes: Shape[] = await getExistingShapes(roomId)
 
-    if (!ctx) {
-        return
-    }
+//     if (!ctx) {
+//         return
+//     }
 
-    socket.onmessage = (event) => {
-        const message = JSON.parse(event.data);
+//     socket.onmessage = (event) => {
+//         const message = JSON.parse(event.data);
 
-        if (message.type == "chat") {
-            const parsedShape = JSON.parse(message.message)
-            existingShapes.push(parsedShape.shape)
-            clearCanvas(existingShapes, canvas, ctx);
-        }
-    }
+//         if (message.type == "chat") {
+//             const parsedShape = JSON.parse(message.message)
+//             existingShapes.push(parsedShape.shape)
+//             clearCanvas(existingShapes, canvas, ctx);
+//         }
+//     }
     
 
-    clearCanvas(existingShapes, canvas, ctx);
-    let clicked = false;
-    let startX = 0;
-    let startY = 0;
+//     clearCanvas(existingShapes, canvas, ctx);
+//     let clicked = false;
+//     let startX = 0;
+//     let startY = 0;
 
-    canvas.addEventListener("mousedown", (e) => {
-        clicked = true
-        startX = e.clientX
-        startY = e.clientY
-    })
+//     canvas.addEventListener("mousedown", (e) => {
+//         clicked = true
+//         startX = e.clientX
+//         startY = e.clientY
+//     })
 
-    canvas.addEventListener("mouseup", (e) => {
-        clicked = false
-        const width = e.clientX - startX;
-        const height = e.clientY - startY;
+//     canvas.addEventListener("mouseup", (e) => {
+//         clicked = false;
+//         const width = e.clientX - startX;
+//         const height = e.clientY - startY;
 
-        // @ts-ignore
-        const selectedTool = window.selectedTool;
-        let shape: Shape | null = null;
-        if (selectedTool === "rect") {
+//         // @ts-ignore
+//         const selectedTool = window.selectedTool;
+//         let shape: Shape | null = null;
+//         if (selectedTool === "rect") {
+//             shape = {
+//                 type: "rect",
+//                 x: startX,
+//                 y: startY,
+//                 height,
+//                 width
+//             };
+//         } else if (selectedTool === "circle") {
+//             const radius = Math.max(width, height) / 2;
+//             shape = {
+//                 type: "circle",
+//                 radius: radius,
+//                 centerX: startX + radius,
+//                 centerY: startY + radius,
+//             };
+//         } else if (selectedTool === "ellipse") {
+//             shape = {
+//                 type: "ellipse",
+//                 centerX: startX + width / 2,
+//                 centerY: startY + height / 2,
+//                 radiusX: Math.abs(width) / 2,
+//                 radiusY: Math.abs(height) / 2,
+//                 rotation: 0 // You can adjust the rotation if needed
+//             };
+//         }
 
-            shape = {
-                type: "rect",
-                x: startX,
-                y: startY,
-                height,
-                width
-            }
-        } else if (selectedTool === "circle") {
-            const radius = Math.max(width, height) / 2;
-            shape = {
-                type: "circle",
-                radius: radius,
-                centerX: startX + radius,
-                centerY: startY + radius,
-            }
-        }
+//         if (!shape) {
+//             return;
+//         }
 
-        if (!shape) {
-            return;
-        }
+//         existingShapes.push(shape);
 
-        existingShapes.push(shape);
+//         socket.send(JSON.stringify({
+//             type: "chat",
+//             message: JSON.stringify({
+//                 shape
+//             }),
+//             roomId
+//         }));
+//     });
 
-        socket.send(JSON.stringify({
-            type: "chat",
-            message: JSON.stringify({
-                shape
-            }),
-            roomId
-        }))
+//     canvas.addEventListener("mousemove", (e) => {
+//         if (clicked) {
+//             const width = e.clientX - startX;
+//             const height = e.clientY - startY;
+//             clearCanvas(existingShapes, canvas, ctx);
+//             ctx.strokeStyle = "rgba(255, 255, 255)";
+//             // @ts-ignore
+//             const selectedTool = window.selectedTool;
+//             if (selectedTool === "rect") {
+//                 ctx.strokeRect(startX, startY, width, height);   
+//             } else if (selectedTool === "circle") {
+//                 const radius = Math.max(width, height) / 2;
+//                 const centerX = startX + radius;
+//                 const centerY = startY + radius;
+//                 ctx.beginPath();
+//                 ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+//                 ctx.stroke();
+//                 ctx.closePath();                
+//             } else if (selectedTool === "ellipse") {
+//                 const centerX = startX + width / 2;
+//                 const centerY = startY + height / 2;
+//                 const radiusX = Math.abs(width) / 2;
+//                 const radiusY = Math.abs(height) / 2;
+//                 const rotation = 0; // You can adjust the rotation if needed
+//                 ctx.beginPath();
+//                 ctx.ellipse(centerX, centerY, radiusX, radiusY, rotation, 0, 2 * Math.PI);
+//                 ctx.stroke();
+//                 ctx.closePath();                
+//             }
+//         }
+//     })            
+// }
 
-    })
+// function clearCanvas(existingShapes: Shape[], canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
+//     ctx.clearRect(0, 0, canvas.width, canvas.height);
+//     ctx.fillStyle = "rgba(0, 0, 0)"
+//     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    canvas.addEventListener("mousemove", (e) => {
-        if (clicked) {
-            const width = e.clientX - startX;
-            const height = e.clientY - startY;
-            clearCanvas(existingShapes, canvas, ctx);
-            ctx.strokeStyle = "rgba(255, 255, 255)"
-            // @ts-ignore
-            const selectedTool = window.selectedTool;
-            if (selectedTool === "rect") {
-                ctx.strokeRect(startX, startY, width, height);   
-            } else if (selectedTool === "circle") {
-                const radius = Math.max(width, height) / 2;
-                const centerX = startX + radius;
-                const centerY = startY + radius;
-                ctx.beginPath();
-                ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-                ctx.stroke();
-                ctx.closePath();                
-            }
-        }
-    })            
-}
+//     existingShapes.map((shape) => {
+//         if (shape.type === "rect") {
+//             ctx.strokeStyle = "rgba(255, 255, 255)"
+//             ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+//         } else if (shape.type === "circle") {
+//             ctx.beginPath();
+//             ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+//             ctx.stroke();
+//             ctx.closePath();                
+//         } else if (shape.type === "ellipse") {
+//             ctx.beginPath();
+//             ctx.ellipse(shape.centerX, shape.centerY, shape.radiusX, shape.radiusY, shape.rotation, 0, 2 * Math.PI);
+//             ctx.stroke();
+//             ctx.closePath();                
+//         }
+//     })
+// }
 
-function clearCanvas(existingShapes: Shape[], canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = "rgba(0, 0, 0)"
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+// async function getExistingShapes(roomId: string) {
+//     const res = await axios.get(`${HTTP_BACKEND}/chats/${roomId}`);
+//     const messages = res.data.messages;
 
-    existingShapes.map((shape) => {
-        if (shape.type === "rect") {
-            ctx.strokeStyle = "rgba(255, 255, 255)"
-            ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-        } else if (shape.type === "circle") {
-            ctx.beginPath();
-            ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.closePath();                
-        }
-    })
-}
+//     const shapes = messages.map((x: {message: string}) => {
+//         const messageData = JSON.parse(x.message)
+//         return messageData.shape;
+//     })
 
-async function getExistingShapes(roomId: string) {
-    const res = await axios.get(`${HTTP_BACKEND}/chats/${roomId}`);
-    const messages = res.data.messages;
-
-    const shapes = messages.map((x: {message: string}) => {
-        const messageData = JSON.parse(x.message)
-        return messageData.shape;
-    })
-
-    return shapes;
-}
+//     return shapes;
+// }
