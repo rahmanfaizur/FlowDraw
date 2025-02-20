@@ -37,15 +37,8 @@ export function RoomCanvas({roomId} : {roomId : string}) {
 
     return (
         <div>
-            <Canvas roomId={roomId} socket={socket} strokeSize={strokeSize} /> {/* Pass stroke size */}
-            {/* Add a control to change stroke size */}
-            <input 
-                type="range" 
-                min="1" 
-                max="20" 
-                value={strokeSize} 
-                onChange={(e) => setStrokeSize(Number(e.target.value))} 
-            />
+            <Canvas roomId={roomId} socket={socket} initialStrokeSize={strokeSize} /> {/* Pass initial stroke size */}
+            {/* Control to change stroke size can be removed from here */}
         </div>
     );
 }

@@ -7,11 +7,15 @@ type Shape = {
     y: number;
     width: number;
     height: number;
+    color?: string;
+    lineWidth?: number;
 } | {
     type: "circle";
     centerX: number;
     centerY: number;
     radius: number;
+    color?: string;
+    lineWidth?: number;
 } | {
     type: "pencil";
     points: Array<{x: number, y: number}>;
@@ -24,6 +28,8 @@ type Shape = {
     radiusX: number;
     radiusY: number;
     rotation: number;
+    color?: string;
+    lineWidth?: number;
 }
 
 export class Game {
@@ -37,6 +43,7 @@ export class Game {
     private selectedTool: Tool = "circle";
     private currentPencilPath: Shape | null = null;
     private strokeSize: number = 5; // Default stroke size
+    private strokeColor: string = "#000000"; // Default stroke color
 
     socket: WebSocket;
 
@@ -84,6 +91,7 @@ export class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.existingShapes.forEach((shape) => {
+            this.ctx.lineWidth = shape.lineWidth || this.strokeSize; // Set line width from shape or default
             if (shape.type === "rect") {
                 this.ctx.strokeStyle = "rgba(255, 255, 255)";
                 this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
@@ -104,7 +112,7 @@ export class Game {
     }
 
     private drawPencilPath(path: { points: Array<{ x: number, y: number }> }) {
-        this.ctx.lineWidth = this.strokeSize; // Set line width
+        this.ctx.lineWidth = path.lineWidth; // Set line width
         this.ctx.beginPath();
         const points = path.points;
         this.ctx.moveTo(points[0].x, points[0].y);
@@ -128,7 +136,7 @@ export class Game {
                 type: "pencil",
                 points: [{x, y}],
                 lineWidth: this.strokeSize,
-                color: "#FFFFFF"
+                color: this.strokeColor
             };
             this.clicked = true;
         } else {
@@ -152,7 +160,7 @@ export class Game {
                 const width = x - this.startX;
                 const height = y - this.startY;
                 this.clearCanvas();
-                this.ctx.strokeStyle = "rgba(255, 255, 255)";
+                this.ctx.strokeStyle = this.strokeColor;
                 
                 if (this.selectedTool === "rect") {
                     this.ctx.strokeRect(this.startX, this.startY, width, height);
@@ -202,7 +210,9 @@ export class Game {
                     x: this.startX,
                     y: this.startY,
                     height,
-                    width
+                    width,
+                    color: this.strokeColor,
+                    lineWidth: this.strokeSize
                 };
             } else if (this.selectedTool === "circle") {
                 const radius = Math.max(width, height) / 2;
@@ -211,6 +221,7 @@ export class Game {
                     radius: radius,
                     centerX: this.startX + radius,
                     centerY: this.startY + radius,
+                    color: this.strokeColor,
                     lineWidth: this.strokeSize
                 };
             } else if (this.selectedTool === "ellipse") {
@@ -223,11 +234,13 @@ export class Game {
                     radiusX: radiusX,
                     radiusY: radiusY,
                     rotation: 0,
+                    color: this.strokeColor,
                     lineWidth: this.strokeSize
                 };
             }
             
             if (shape) {
+                shape.lineWidth = this.strokeSize; // Set line width for the shape
                 this.existingShapes.push(shape);
                 this.socket.send(JSON.stringify({
                     type: "chat",
@@ -247,5 +260,9 @@ export class Game {
 
     setStrokeSize(size: number) {
         this.strokeSize = size;
+    }
+
+    setStrokeColor(color: string) {
+        this.strokeColor = color;
     }
 }
