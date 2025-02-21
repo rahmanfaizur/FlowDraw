@@ -1,17 +1,11 @@
 "use client"
 
-import React, { useState } from "react";
-import { SketchPicker } from "react-color";
+import { ColorWheel } from "@/components/ColorPicker"
 
-const ColorPicker: React.FC = () => {
-  const [color, setColor] = useState("#ffffff"); // Default color
-
+export default function Test() {
   return (
-    <SketchPicker
-      color={color}
-      onChangeComplete={(newColor) => setColor(newColor.hex)}
-    />
-  );
-};
-
-export default ColorPicker;
+    <div>
+      <ColorWheel></ColorWheel>
+    </div>
+  )
+}

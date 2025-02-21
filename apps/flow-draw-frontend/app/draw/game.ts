@@ -42,8 +42,8 @@ export class Game {
     private startY = 0;
     private selectedTool: Tool = "circle";
     private currentPencilPath: Shape | null = null;
-    private strokeSize: number = 5; // Default stroke size
-    private strokeColor: string = "#000000"; // Default stroke color
+    private strokeSize: number = 5;
+    private strokeColor: string = "rgba(255, 255, 255, 1)";
 
     socket: WebSocket;
 
@@ -91,9 +91,9 @@ export class Game {
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.existingShapes.forEach((shape) => {
-            this.ctx.lineWidth = shape.lineWidth || this.strokeSize; // Set line width from shape or default
+            this.ctx.lineWidth = shape.lineWidth || this.strokeSize;
+            this.ctx.strokeStyle = shape.color || this.strokeColor;
             if (shape.type === "rect") {
-                this.ctx.strokeStyle = "rgba(255, 255, 255)";
                 this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
             } else if (shape.type === "circle") {
                 this.ctx.beginPath();
@@ -111,8 +111,9 @@ export class Game {
         });
     }
 
-    private drawPencilPath(path: { points: Array<{ x: number, y: number }> }) {
-        this.ctx.lineWidth = path.lineWidth; // Set line width
+    private drawPencilPath(path: { points: Array<{ x: number, y: number }>, color: string }) {
+        this.ctx.strokeStyle = path.color;
+        this.ctx.lineWidth = path.lineWidth;
         this.ctx.beginPath();
         const points = path.points;
         this.ctx.moveTo(points[0].x, points[0].y);
@@ -190,6 +191,7 @@ export class Game {
         if (this.selectedTool === "pencil" && this.currentPencilPath) {
             this.currentPencilPath.lineWidth = this.strokeSize;
             this.existingShapes.push(this.currentPencilPath);
+            // this.existingShapes.push(this.strokeSize);
             this.socket.send(JSON.stringify({
                 type: "chat",
                 message: JSON.stringify({ shape: this.currentPencilPath }),
@@ -240,7 +242,7 @@ export class Game {
             }
             
             if (shape) {
-                shape.lineWidth = this.strokeSize; // Set line width for the shape
+                shape.lineWidth = this.strokeSize;
                 this.existingShapes.push(shape);
                 this.socket.send(JSON.stringify({
                     type: "chat",
