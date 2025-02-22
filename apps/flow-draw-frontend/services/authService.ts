@@ -124,3 +124,17 @@ export const getSlug = async (roomId: string) => {
         throw error; // Rethrow the error for further handling if needed
     }
 };
+
+export const deleteChat = async (chatId: string) => {
+    try {
+        const response = await axios.delete(`${HTTP_BACKEND}/chat/${chatId}`, {
+            headers: {
+                'Authorization': `${localStorage.getItem("token")}`
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting chat:", error);
+        throw error;
+    }
+};

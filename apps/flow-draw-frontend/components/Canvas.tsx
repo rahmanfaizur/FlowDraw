@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { IconButton } from "./IconButton";
-import { CircleIcon, EggIcon, EllipsisIcon, EraserIcon, HomeIcon, Palette, Pencil, RectangleHorizontalIcon } from "lucide-react";
+import { CircleIcon, EggIcon, EllipsisIcon, EraserIcon, HomeIcon, Palette, Pencil, PointerIcon, RectangleHorizontalIcon } from "lucide-react";
 import { Game } from "@/app/draw/game";
 import { SketchPicker, ColorResult } from 'react-color';
 import { useRouter } from "next/navigation";
 
 
-export type Tool = "circle" | "rect" | "pencil" | "ellipse";
+export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer";
 
 export function Canvas({
     roomId,
@@ -104,7 +104,7 @@ function TopBar({ selectedTool, setSelectedTool, setShowStrokeSize, setShowColor
             <IconButton onClick={() => { setSelectedTool("ellipse") }} activated={selectedTool === "ellipse"} icon={<EggIcon/>}></IconButton>
             <IconButton onClick={() => setShowStrokeSize(prev => !prev)} activated={false} icon={<EllipsisIcon/>}></IconButton>
             <IconButton onClick={() => setShowColorPicker(prev => !prev)} activated={false} icon={<Palette/>}></IconButton>
-            <IconButton icon={<EraserIcon/>}></IconButton>
+            <IconButton onClick={() => { setSelectedTool("pointer") }} activated={selectedTool === "pointer"} icon={<PointerIcon/>}></IconButton>
         </div>
     );
 }

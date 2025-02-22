@@ -160,26 +160,42 @@ app.get("/api/v1/allrooms", async (req, res) => {
     }
 });
 
-app.delete('/api/v1/drawing/:id', userMiddleware, async (req: Request, res: Response) => {
-    const drawingId = Number(req.params.id);
-    console.log(drawingId);
+app.delete('/api/v1/chat/:id', userMiddleware, async (req: Request, res: Response) => {
+    const shapeId = req.params.id;
 
     try {
-        const deletedDrawing = await prismaClient.chat.delete({
-            where: { id: drawingId }
+        // Fetch the chat that contains the shape ID in the message field
+        const chat = await prismaClient.chat.findFirst({
+            where: {
+                message: {
+                    contains: `"id":"${shapeId}"` // Simple string search (ensure proper escaping)
+                }
+            }
+        });
+
+        if (!chat) {
+            return res.status(404).json({
+                message: "Chat message with this shape ID not found."
+            });
+        }
+
+        // Delete the found chat message
+        const deletedChat = await prismaClient.chat.delete({
+            where: { id: chat.id }
         });
 
         res.status(200).json({
-            message: "Drawing deleted successfully!",
-            deletedDrawing
+            message: "Chat message deleted successfully!",
+            deletedChat
         });
     } catch (error) {
         console.error(error);
         res.status(500).json({
-            message: "An error occurred while deleting the drawing."
+            message: "An error occurred while deleting the chat message."
         });
     }
 });
+
 
 app.delete('/api/v1/room/:id', userMiddleware, async (req: Request, res: Response) => {
     const roomId = req.params.id;
@@ -196,7 +212,7 @@ app.delete('/api/v1/room/:id', userMiddleware, async (req: Request, res: Respons
         });
 
         res.status(200).json({
-            message: "Room deleted successfully!",
+            message: "Roomv deleted successfully!",
             deletedRoom
         });
     } catch (error) {
@@ -227,6 +243,7 @@ app.get("/api/v1/slug/:roomId", async (req, res) => {
         });
     }
 });
+
 
 
 app.listen(3001, () => {
