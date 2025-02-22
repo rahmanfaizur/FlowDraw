@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { IconButton } from "./IconButton";
-import { CircleIcon, EggIcon, EllipsisIcon, EraserIcon, HomeIcon, Palette, Pencil, PointerIcon, RectangleHorizontalIcon } from "lucide-react";
+import { ArrowUp10Icon, ArrowUpIcon, CircleIcon, EggIcon, EllipsisIcon, EraserIcon, HomeIcon, LetterText, LetterTextIcon, Palette, Pencil, PointerIcon, RectangleHorizontalIcon, TextIcon } from "lucide-react";
 import { Game } from "@/app/draw/game";
 import { SketchPicker, ColorResult } from 'react-color';
 import { useRouter } from "next/navigation";
@@ -105,6 +105,8 @@ function TopBar({ selectedTool, setSelectedTool, setShowStrokeSize, setShowColor
             <IconButton onClick={() => setShowStrokeSize(prev => !prev)} activated={false} icon={<EllipsisIcon/>}></IconButton>
             <IconButton onClick={() => setShowColorPicker(prev => !prev)} activated={false} icon={<Palette/>}></IconButton>
             <IconButton onClick={() => { setSelectedTool("pointer") }} activated={selectedTool === "pointer"} icon={<PointerIcon/>}></IconButton>
+            <IconButton onClick={() => { setSelectedTool("arrow") }} activated={selectedTool === "arrow"} icon={<ArrowUpIcon/>}></IconButton>
+            <IconButton onClick={() => { setSelectedTool("text") }} activated={selectedTool === "text"} icon={<LetterText/>}></IconButton>
         </div>
     );
 }

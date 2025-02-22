@@ -5,7 +5,7 @@ import { deleteChat } from "@/services/authService";
 type Shape = {
     id: string;
     selected?: boolean;
-    type: "rect" | "circle" | "pencil" | "ellipse";
+    type: "rect" | "circle" | "pencil" | "ellipse" | "arrow";
     x: number;
     y: number;
     width: number;
@@ -39,6 +39,16 @@ type Shape = {
     rotation: number;
     color?: string;
     lineWidth?: number;
+} | {
+    id: string;
+    selected?: boolean;
+    type: "arrow";
+    fromX: number;
+    fromY: number;
+    toX: number;
+    toY: number;
+    color?: string;
+    lineWidth?: number;
 }
 
 export class Game {
@@ -60,6 +70,7 @@ export class Game {
     private lastFrameTime: number = 0;
     private readonly FPS: number = 30;
     private readonly frameInterval: number = 1000 / 30; // 33.33ms between frames
+    private animationFrameId: number | null = null;
 
     socket: WebSocket;
 
@@ -76,6 +87,10 @@ export class Game {
     }
     
     destroy() {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
         this.canvas.removeEventListener("mousedown", this.mouseDownHandler);
         this.canvas.removeEventListener("mouseup", this.mouseUpHandler);
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
@@ -130,6 +145,8 @@ export class Game {
                 this.ctx.closePath();
             } else if (shape.type === "pencil") {
                 this.drawPencilPath(shape);
+            } else if (shape.type === "arrow") {
+                this.drawArrow(shape.fromX, shape.fromY, shape.toX, shape.toY);
             }
             
             if (shape.selected) {
@@ -166,7 +183,10 @@ export class Game {
             const buttonSize = 20;
             let buttonX, buttonY;
             
-            if (shape.type === "rect") {
+            if (shape.type === "arrow") {
+                buttonX = shape.fromX;
+                buttonY = shape.fromY - buttonSize;
+            } else if (shape.type === "rect") {
                 buttonX = shape.x + shape.width;
                 buttonY = shape.y;
             } else if (shape.type === "circle") {
@@ -218,7 +238,10 @@ export class Game {
     private isClickOnDeleteButton(x: number, y: number, shape: Shape): boolean {
         let buttonX, buttonY;
         
-        if (shape.type === "rect") {
+        if (shape.type === "arrow") {
+            buttonX = shape.fromX;
+            buttonY = shape.fromY - 20; // 20 is buttonSize
+        } else if (shape.type === "rect") {
             buttonX = shape.x + shape.width;
             buttonY = shape.y;
         } else if (shape.type === "circle") {
@@ -307,7 +330,6 @@ export class Game {
         const currentTime = performance.now();
         const elapsed = currentTime - this.lastFrameTime;
 
-        // Only update if enough time has passed (33.33ms for 30 FPS)
         if (elapsed < this.frameInterval) return;
         
         this.lastFrameTime = currentTime;
@@ -320,84 +342,106 @@ export class Game {
         if (this.selectedTool === "pointer" && this.isDragging) {
             const selectedShape = this.existingShapes.find(shape => shape.selected);
             if (selectedShape) {
-                // Remove the shape from existingShapes while dragging
-                this.existingShapes = this.existingShapes.filter(shape => !shape.selected);
-                
-                if (selectedShape.type === "rect") {
-                    selectedShape.x = x - this.dragOffsetX;
-                    selectedShape.y = y - this.dragOffsetY;
-                } else if (selectedShape.type === "circle" || selectedShape.type === "ellipse") {
-                    selectedShape.centerX = x - this.dragOffsetX;
-                    selectedShape.centerY = y - this.dragOffsetY;
-                } else if (selectedShape.type === "pencil") {
-                    const minX = Math.min(...selectedShape.points.map(p => p.x));
-                    const minY = Math.min(...selectedShape.points.map(p => p.y));
-                    const dx = x - this.dragOffsetX - minX;
-                    const dy = y - this.dragOffsetY - minY;
-                    selectedShape.points = selectedShape.points.map(p => ({
-                        x: p.x + dx,
-                        y: p.y + dy
-                    }));
+                // Cancel any existing animation frame
+                if (this.animationFrameId) {
+                    cancelAnimationFrame(this.animationFrameId);
                 }
-                
-                // Add the shape back to existingShapes at its new position
-                this.existingShapes.push(selectedShape);
-                this.clearCanvas();
+
+                // Schedule the update on the next animation frame
+                this.animationFrameId = requestAnimationFrame(() => {
+                    this.existingShapes = this.existingShapes.filter(shape => !shape.selected);
+                    
+                    if (selectedShape.type === "arrow") {
+                        const dx = x - this.dragOffsetX - selectedShape.fromX;
+                        const dy = y - this.dragOffsetY - selectedShape.fromY;
+                        selectedShape.fromX += dx;
+                        selectedShape.fromY += dy;
+                        selectedShape.toX += dx;
+                        selectedShape.toY += dy;
+                    } else if (selectedShape.type === "rect") {
+                        selectedShape.x = x - this.dragOffsetX;
+                        selectedShape.y = y - this.dragOffsetY;
+                    } else if (selectedShape.type === "circle" || selectedShape.type === "ellipse") {
+                        selectedShape.centerX = x - this.dragOffsetX;
+                        selectedShape.centerY = y - this.dragOffsetY;
+                    } else if (selectedShape.type === "pencil") {
+                        const minX = Math.min(...selectedShape.points.map(p => p.x));
+                        const minY = Math.min(...selectedShape.points.map(p => p.y));
+                        const dx = x - this.dragOffsetX - minX;
+                        const dy = y - this.dragOffsetY - minY;
+                        selectedShape.points = selectedShape.points.map(p => ({
+                            x: p.x + dx,
+                            y: p.y + dy
+                        }));
+                    }
+                    
+                    this.existingShapes.push(selectedShape);
+                    this.clearCanvas();
+                    this.animationFrameId = null;
+                });
                 return;
             }
         }
 
         if (this.clicked) {
-            if (this.selectedTool === "pencil" && this.currentPencilPath) {
+            this.clearCanvas();
+            this.ctx.strokeStyle = this.strokeColor;
+            
+            if (this.selectedTool === "arrow") {
+                // Only draw arrow if there's some minimum distance
+                const distance = Math.sqrt(
+                    Math.pow(x - this.startX, 2) + 
+                    Math.pow(y - this.startY, 2)
+                );
+                
+                if (distance > 5) { // Minimum distance threshold
+                    this.drawArrow(this.startX, this.startY, x, y);
+                }
+            } else if (this.selectedTool === "rect") {
+                const width = x - this.startX;
+                const height = y - this.startY;
+                this.ctx.strokeRect(this.startX, this.startY, width, height);
+            } else if (this.selectedTool === "circle") {
+                const radius = Math.max(x - this.startX, y - this.startY) / 2;
+                this.ctx.beginPath();
+                this.ctx.arc(this.startX + radius, this.startY + radius, Math.abs(radius), 0, Math.PI * 2);
+                this.ctx.stroke();
+                this.ctx.closePath();
+            } else if (this.selectedTool === "ellipse") {
+                const radiusX = Math.abs(x - this.startX) / 2;
+                const radiusY = Math.abs(y - this.startY) / 2;
+                const centerX = this.startX + (x - this.startX) / 2;
+                const centerY = this.startY + (y - this.startY) / 2;
+                
+                this.ctx.beginPath();
+                this.ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
+                this.ctx.stroke();
+                this.ctx.closePath();
+            } else if (this.selectedTool === "pencil" && this.currentPencilPath) {
                 this.currentPencilPath.points.push({x, y});
                 this.clearCanvas();
                 this.drawPencilPath(this.currentPencilPath);
-            } else {
-                const width = x - this.startX;
-                const height = y - this.startY;
-                this.clearCanvas();
-                this.ctx.strokeStyle = this.strokeColor;
-                
-                if (this.selectedTool === "rect") {
-                    this.ctx.strokeRect(this.startX, this.startY, width, height);
-                } else if (this.selectedTool === "circle") {
-                    const radius = Math.max(width, height) / 2;
-                    const centerX = this.startX + radius;
-                    const centerY = this.startY + radius;
-                    this.ctx.beginPath();
-                    this.ctx.arc(centerX, centerY, Math.abs(radius), 0, Math.PI * 2);
-                    this.ctx.stroke();
-                    this.ctx.closePath();
-                } else if (this.selectedTool === "ellipse") {
-                    const radiusX = Math.abs(width) / 2;
-                    const radiusY = Math.abs(height) / 2;
-                    const centerX = this.startX + (width < 0 ? width : 0) + radiusX;
-                    const centerY = this.startY + (height < 0 ? height : 0) + radiusY;
-                    this.ctx.beginPath();
-                    this.ctx.ellipse(centerX, centerY, radiusX, radiusY, 0, 0, 2 * Math.PI);
-                    this.ctx.stroke();
-                    this.ctx.closePath();
-                }
             }
         }
     }
 
     mouseUpHandler = async (e: MouseEvent) => {
+        // Cancel any pending animation frame when mouse is released
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+
         if (this.isDragging) {
             const selectedShape = this.existingShapes.find(shape => shape.selected);
             if (selectedShape) {
                 try {
-                    // Delete the old shape from the server
                     await deleteChat(selectedShape.id);
                     
-                    // Create a new shape with updated position
                     const newShape = { ...selectedShape, id: crypto.randomUUID() };
-                    
-                    // Remove the old shape and add the new one
                     this.existingShapes = this.existingShapes.filter(shape => shape.id !== selectedShape.id);
                     this.existingShapes.push(newShape);
                     
-                    // Send the new shape to the server
                     this.socket.send(JSON.stringify({
                         type: "chat",
                         message: JSON.stringify({ shape: newShape }),
@@ -407,7 +451,6 @@ export class Game {
                     console.error("Error updating shape position:", error);
                 }
                 
-                // Clean up dragging state
                 this.isDragging = false;
                 this.dragOffsetX = 0;
                 this.dragOffsetY = 0;
@@ -429,23 +472,40 @@ export class Game {
             const rect = this.canvas.getBoundingClientRect();
             const x = e.clientX - rect.left;
             const y = e.clientY - rect.top;
-            const width = x - this.startX;
-            const height = y - this.startY;
 
             let shape: Shape | null = null;
-            if (this.selectedTool === "rect") {
+            if (this.selectedTool === "arrow") {
+                const distance = Math.sqrt(
+                    Math.pow(x - this.startX, 2) + 
+                    Math.pow(y - this.startY, 2)
+                );
+                
+                // Only create arrow if it has some minimum length
+                if (distance > 5) {
+                    shape = {
+                        id: crypto.randomUUID(),
+                        type: "arrow",
+                        fromX: this.startX,
+                        fromY: this.startY,
+                        toX: x,
+                        toY: y,
+                        color: this.strokeColor,
+                        lineWidth: this.strokeSize
+                    };
+                }
+            } else if (this.selectedTool === "rect") {
                 shape = {
                     id: crypto.randomUUID(),
                     type: "rect",
                     x: this.startX,
                     y: this.startY,
-                    height,
-                    width,
+                    height: y - this.startY,
+                    width: x - this.startX,
                     color: this.strokeColor,
                     lineWidth: this.strokeSize
                 };
             } else if (this.selectedTool === "circle") {
-                const radius = Math.max(width, height) / 2;
+                const radius = Math.max(x - this.startX, y - this.startY) / 2;
                 shape = {
                     id: crypto.randomUUID(),
                     type: "circle",
@@ -456,13 +516,16 @@ export class Game {
                     lineWidth: this.strokeSize
                 };
             } else if (this.selectedTool === "ellipse") {
-                const radiusX = Math.abs(width) / 2;
-                const radiusY = Math.abs(height) / 2;
+                const radiusX = Math.abs(x - this.startX) / 2;
+                const radiusY = Math.abs(y - this.startY) / 2;
+                const centerX = this.startX + (x - this.startX) / 2;
+                const centerY = this.startY + (y - this.startY) / 2;
+                
                 shape = {
                     id: crypto.randomUUID(),
                     type: "ellipse",
-                    centerX: this.startX + (width < 0 ? width : 0) + radiusX,
-                    centerY: this.startY + (height < 0 ? height : 0) + radiusY,
+                    centerX: centerX,
+                    centerY: centerY,
                     radiusX: radiusX,
                     radiusY: radiusY,
                     rotation: 0,
@@ -509,7 +572,7 @@ export class Game {
     }
 
     private isPointInShape(x: number, y: number, shape: Shape): boolean {
-        const strokeThreshold = (shape.lineWidth || this.strokeSize) / 2 + 2; // Added tolerance for easier selection
+        const strokeThreshold = (shape.lineWidth || this.strokeSize) / 2 + 2;
 
         if (shape.type === "rect") {
             // Check if point is near any of the four edges
@@ -553,6 +616,10 @@ export class Game {
                 const distance = this.pointToLineDistance(x, y, p1.x, p1.y, p2.x, p2.y);
                 if (distance < strokeThreshold) return true;
             }
+        } else if (shape.type === "arrow") {
+            // Check if point is near the arrow line
+            const distance = this.pointToLineDistance(x, y, shape.fromX, shape.fromY, shape.toX, shape.toY);
+            return distance < strokeThreshold;
         }
         return false;
     }
@@ -582,5 +649,32 @@ export class Game {
         const dx = x - xx;
         const dy = y - yy;
         return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    private drawArrow(fromX: number, fromY: number, toX: number, toY: number) {
+        const arrowLength = Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2);
+        const arrowThickness = this.strokeSize;
+        const arrowHeadLength = arrowThickness * 3; // Made longer for pointier appearance
+        const arrowHeadAngle = Math.atan2(toY - fromY, toX - fromX);
+
+        // Draw main line
+        this.ctx.beginPath();
+        this.ctx.moveTo(fromX, fromY);
+        this.ctx.lineTo(toX, toY);
+
+        // Calculate arrow head points with sharper angle (PI/8 instead of PI/6)
+        const arrowX1 = toX - arrowHeadLength * Math.cos(arrowHeadAngle - Math.PI / 8);
+        const arrowY1 = toY - arrowHeadLength * Math.sin(arrowHeadAngle - Math.PI / 8);
+        const arrowX2 = toX - arrowHeadLength * Math.cos(arrowHeadAngle + Math.PI / 8);
+        const arrowY2 = toY - arrowHeadLength * Math.sin(arrowHeadAngle + Math.PI / 8);
+
+        // Draw arrow head
+        this.ctx.moveTo(toX, toY);
+        this.ctx.lineTo(arrowX1, arrowY1);
+        this.ctx.moveTo(toX, toY);
+        this.ctx.lineTo(arrowX2, arrowY2);
+
+        this.ctx.stroke();
+        this.ctx.closePath();
     }
 }
