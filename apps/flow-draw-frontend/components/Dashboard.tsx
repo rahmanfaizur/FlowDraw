@@ -3,22 +3,23 @@ import { getAllRooms, getRoomBySlug, getRoomId } from "@/services/authService";
 import { useRouter } from "next/navigation";
 import Card from "./Card";
 import { CustomButton } from "./CustomButton";
+import { Button, ButtonVariant } from "./Button";
 
 export function Dashboard() {
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [rooms, setRooms] = useState<Room[]>([]);
     const router = useRouter();
 
-    useEffect(() => {
-        const fetchRooms = async () => {
-            try {
-                const allRooms = await getAllRooms();
-                setRooms(allRooms);
-            } catch (error) {
-                console.error("Error fetching rooms:", error);
-            }
-        };
+    const fetchRooms = async () => {
+        try {
+            const allRooms = await getAllRooms();
+            setRooms(allRooms);
+        } catch (error) {
+            console.error("Error fetching rooms:", error);
+        }
+    };
 
+    useEffect(() => {
         fetchRooms();
     }, []);
 
@@ -50,9 +51,17 @@ export function Dashboard() {
         }
     };
 
+    function logoutUser() {
+        localStorage.removeItem("token");
+        router.push("/signin");
+    }
+
     return (
-        <div className="bg-black text-white p-8">
+        <div className="bg-black text-white p-8 w-screen h-screen">
+            <div className="flex justify-between items-center">
             <h1 className="text-3xl font-bold mb-4">Welcome to the Dashboard</h1>
+            <Button onClick={logoutUser} variant={ButtonVariant.RED}>Logout</Button>
+            </div>
             <div className="mb-6">
                 <p className="mb-2">Join a Room:</p>
                 <input
@@ -70,6 +79,7 @@ export function Dashboard() {
                         key={room.slug}
                         title={room.slug}
                         onJoin={() => handleJoinRoom(room.slug)}
+                        onDelete={fetchRooms}
                     />
                 ))}
             </div>

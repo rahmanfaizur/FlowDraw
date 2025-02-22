@@ -99,3 +99,28 @@ export const getRoomBySlug = async (slug: string) => {
         throw error; // Rethrow the error for further handling if needed
     }
 };
+
+export const deleteRoom = async (roomId: string) => {
+    try {
+        const response = await axios.delete(`${HTTP_BACKEND}/room/${roomId}`, {
+            headers: {
+                'Authorization': `${localStorage.getItem("token")}` // Include the token for authentication
+            }
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Error deleting room:", error);
+        throw error; // Rethrow the error for further handling if needed
+    }
+};
+
+export const getSlug = async (roomId: string) => {
+    try {
+        const response = await axios.get(`${HTTP_BACKEND}/slug/${roomId}`);
+        // console.log("API Response:", response.data); // Log the API response
+        return response.data.slug;
+    } catch (error) {
+        console.error("Error fetching slug:", error);
+        throw error; // Rethrow the error for further handling if needed
+    }
+};

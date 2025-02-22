@@ -160,6 +160,75 @@ app.get("/api/v1/allrooms", async (req, res) => {
     }
 });
 
+app.delete('/api/v1/drawing/:id', userMiddleware, async (req: Request, res: Response) => {
+    const drawingId = Number(req.params.id);
+    console.log(drawingId);
+
+    try {
+        const deletedDrawing = await prismaClient.chat.delete({
+            where: { id: drawingId }
+        });
+
+        res.status(200).json({
+            message: "Drawing deleted successfully!",
+            deletedDrawing
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "An error occurred while deleting the drawing."
+        });
+    }
+});
+
+app.delete('/api/v1/room/:id', userMiddleware, async (req: Request, res: Response) => {
+    const roomId = req.params.id;
+    console.log(roomId);
+    try {
+        // First delete all chat messages associated with the room
+        await prismaClient.chat.deleteMany({
+            where: { roomId: Number(roomId) }
+        });
+
+        // Then delete the room
+        const deletedRoom = await prismaClient.room.delete({
+            where: { id: Number(roomId) }
+        });
+
+        res.status(200).json({
+            message: "Room deleted successfully!",
+            deletedRoom
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "An error occurred while deleting the room.",
+            error: error
+        });
+    }
+});
+
+app.get("/api/v1/slug/:roomId", async (req, res) => {
+    try {
+        const roomId = Number(req.params.roomId);
+        const room = await prismaClient.room.findFirst({
+            where: {
+                id: roomId  // Changed from id: Number(roomId) to properly format the where clause
+            }
+        });
+        res.json({
+            slug: room?.slug
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({
+            message: "An error occurred while fetching the room slug",
+            error: error
+        });
+    }
+});
+
+
 app.listen(3001, () => {
     console.log("connected to port 3001!");
 });

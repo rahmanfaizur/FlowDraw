@@ -21,7 +21,8 @@ export enum ButtonVariant {
   SECONDARY = "bg-gray-500 text-white",
   OUTLINE = "border border-gray-500 text-gray-500",
   BLACK = "border bg-black text-white shadow-md",
-  WHITE = "border bg-white text-black border-gray-300 shadow-md"
+  WHITE = "border bg-white text-black border-gray-300 shadow-md",
+  RED = "border bg-red-500 text-white shadow-md"
 }
 
 export const Button: React.FC<ButtonProps> = ({

@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { IconButton } from "./IconButton";
-import { CircleIcon, EggIcon, EllipsisIcon, EraserIcon, Palette, Pencil, RectangleHorizontalIcon } from "lucide-react";
+import { CircleIcon, EggIcon, EllipsisIcon, EraserIcon, HomeIcon, Palette, Pencil, RectangleHorizontalIcon } from "lucide-react";
 import { Game } from "@/app/draw/game";
 import { SketchPicker, ColorResult } from 'react-color';
+import { useRouter } from "next/navigation";
 
 
 export type Tool = "circle" | "rect" | "pencil" | "ellipse";
@@ -89,8 +90,14 @@ function TopBar({ selectedTool, setSelectedTool, setShowStrokeSize, setShowColor
     setShowStrokeSize: (show: boolean) => void,
     setShowColorPicker: (show: boolean) => void
 }) {
+    const router = useRouter();
+
+    function goToDashboard() {
+        router.push('/dashboard');
+    }
     return (
         <div className="absolute top-4 left-4 flex space-x-2">
+            <IconButton onClick={goToDashboard} icon={<HomeIcon/>}></IconButton>
             <IconButton onClick={() => { setSelectedTool("pencil") }} activated={selectedTool === "pencil"} icon={<Pencil/>}></IconButton>
             <IconButton onClick={() => { setSelectedTool("rect") }} activated={selectedTool === "rect"} icon={<RectangleHorizontalIcon/>}></IconButton>
             <IconButton onClick={() => { setSelectedTool("circle") }} activated={selectedTool === "circle"} icon={<CircleIcon/>}></IconButton>
