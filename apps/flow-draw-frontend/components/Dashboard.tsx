@@ -57,23 +57,28 @@ export function Dashboard() {
     }
 
     return (
-        <div className="bg-black text-white p-8 w-screen h-screen">
-            <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold mb-4">Welcome to the Dashboard</h1>
-            <Button onClick={logoutUser} variant={ButtonVariant.RED}>Logout</Button>
+        <div className="bg-my-custom text-white p-8 w-full h-full">
+            <div className="flex justify-between items-center mb-8">
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Flow Draw</h1>
+                <Button onClick={logoutUser} variant={ButtonVariant.RED}>Logout</Button>
             </div>
-            <div className="mb-6">
-                <p className="mb-2">Join a Room:</p>
-                <input
-                    type="text"
-                    placeholder="Enter room name"
-                    ref={inputRef}
-                    className="border border-gray-700 rounded px-4 py-2 w-full mb-2 bg-gray-800 text-white"
-                />
-                <CustomButton onClick={handleClick}>Join Room</CustomButton>
+            <div className="flex justify-start items-center mb-8">
+            <div className="bg-gray-800/50 border-2 border-dashed border-gray-600 rounded-lg p-6 backdrop-blur-sm">
+                    <h2 className="text-2xl font-bold text-white mb-4">Create Room</h2>
+                    <input
+                        type="text"
+                        placeholder="Enter room name"
+                        ref={inputRef}
+                        className="border border-gray-600 rounded-lg px-4 py-2 w-full mb-4 bg-gray-700/50 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <CustomButton onClick={handleClick} className="w-full">
+                        Create Room
+                    </CustomButton>
+                </div>
             </div>
-            <p className="text-xl font-semibold mb-4">Available Rooms:</p>
+            
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {/* Existing Rooms */}
                 {rooms.map((room) => (
                     <Card
                         key={room.slug}

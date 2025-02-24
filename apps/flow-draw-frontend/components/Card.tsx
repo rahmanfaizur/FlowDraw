@@ -32,19 +32,19 @@ async function deleteRoomLogic(title: string, onDelete: () => void) {
 
 const Card: React.FC<CardProps> = ({ title, onJoin, onDelete }) => {
     return (
-        <div className="bg-gray-800 border border-gray-600 rounded-lg shadow-lg p-6 transition-transform transform hover:scale-105">
-            <div className="flex justify-between">
-                <h2 className="text-2xl font-bold text-white mb-4">{title}</h2>
+        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 backdrop-blur-sm hover:bg-gray-800/70 transition-all duration-300 group">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">{title}</h2>
                 <div 
                     onClick={() => void deleteRoomLogic(title, onDelete)} 
-                    className="cursor-pointer hover:text-red-500"
+                    className="cursor-pointer text-gray-400 hover:text-red-500 transition-colors"
                 >
-                    <TrashIcon />
+                    <TrashIcon size={20} />
                 </div>
             </div>
             <button
                 onClick={onJoin}
-                className="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg w-full shadow-md transition duration-200"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg w-full shadow-md transition-all duration-300 hover:shadow-lg hover:translate-y-[-2px]"
             >
                 Join
             </button>

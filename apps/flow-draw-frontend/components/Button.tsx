@@ -10,19 +10,19 @@ interface ButtonProps {
 }
 
 export enum ButtonSize {
-  SMALL = "px-2 py-1 text-sm",
+  SMALL = "px-3 py-1.5 text-sm",
   MEDIUM = "px-4 py-2 text-base",
   LARGE = "px-6 py-3 text-lg",
-  LONG = "py-2 w-[25vw]"
+  LONG = "py-2.5 w-[25vw]"
 }
 
 export enum ButtonVariant {
-  PRIMARY = "bg-blue-500 text-white",
-  SECONDARY = "bg-gray-500 text-white",
-  OUTLINE = "border border-gray-500 text-gray-500",
-  BLACK = "border bg-black text-white shadow-md",
-  WHITE = "border bg-white text-black border-gray-300 shadow-md",
-  RED = "border bg-red-500 text-white shadow-md"
+  PRIMARY = "bg-blue-600 text-white shadow-md hover:bg-blue-700",
+  SECONDARY = "bg-gray-600/80 text-white shadow-md hover:bg-gray-700/80",
+  OUTLINE = "border-2 border-gray-400 text-gray-300 hover:border-gray-300 hover:text-white",
+  BLACK = "bg-black/80 text-white shadow-md hover:bg-black",
+  WHITE = "bg-white/90 text-gray-800 border border-gray-200 shadow-md hover:bg-white",
+  RED = "bg-red-600/90 text-white shadow-md hover:bg-red-700"
 }
 
 export const Button: React.FC<ButtonProps> = ({
@@ -36,11 +36,13 @@ export const Button: React.FC<ButtonProps> = ({
   return (
     <button
       className={`
-        rounded-md ${size} ${variant} 
-        transition-all duration-200 
-        hover:opacity-90 hover:scale-[1.02] hover:shadow-lg
-        active:scale-[0.98] active:opacity-80
+        rounded-lg ${size} ${variant} 
+        transition-all duration-300 
+        hover:shadow-lg hover:translate-y-[-1px]
+        active:translate-y-[1px] active:shadow-sm
+        backdrop-blur-sm
         flex items-center justify-center gap-2
+        font-medium
         ${className}
       `}
       onClick={onClick}
