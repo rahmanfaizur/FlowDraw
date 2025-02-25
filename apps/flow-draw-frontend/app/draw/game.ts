@@ -1,55 +1,11 @@
+// apps/flow-draw-frontend/app/draw/Game.ts
 import { Tool } from "@/components/Canvas";
 import { getExistingShapes } from "./http";
 import { deleteChat } from "@/services/authService";
-
-type Shape = {
-    id: string;
-    selected?: boolean;
-    type: "rect" | "circle" | "pencil" | "ellipse" | "arrow";
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    color?: string;
-    lineWidth?: number;
-} | {
-    id: string;
-    selected?: boolean;
-    type: "circle";
-    centerX: number;
-    centerY: number;
-    radius: number;
-    color?: string;
-    lineWidth?: number;
-} | {
-    id: string;
-    selected?: boolean;
-    type: "pencil";
-    points: Array<{x: number, y: number}>;
-    lineWidth: number;
-    color: string;
-} | {
-    id: string;
-    selected?: boolean;
-    type: "ellipse";
-    centerX: number;
-    centerY: number;
-    radiusX: number;
-    radiusY: number;
-    rotation: number;
-    color?: string;
-    lineWidth?: number;
-} | {
-    id: string;
-    selected?: boolean;
-    type: "arrow";
-    fromX: number;
-    fromY: number;
-    toX: number;
-    toY: number;
-    color?: string;
-    lineWidth?: number;
-};
+import { Shape } from './Shape';
+import { drawArrow, drawPencilPath } from './CanvasUtils';
+import { handleSocketMessage } from './SocketHandler';
+import { isClickOnDeleteButton } from './MouseHandler';
 
 export class Game {
     private canvas: HTMLCanvasElement;
@@ -106,14 +62,7 @@ export class Game {
     }
 
     initHandlers() {
-        this.socket.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            if (message.type == "chat") {
-                const parsedShape = JSON.parse(message.message);
-                this.existingShapes.push(parsedShape.shape);
-                this.clearCanvas();
-            }
-        };
+        handleSocketMessage(this.socket, this.existingShapes, () => this.clearCanvas());
     }
 
     clearCanvas() {
@@ -144,9 +93,9 @@ export class Game {
                 this.ctx.stroke();
                 this.ctx.closePath();
             } else if (shape.type === "pencil") {
-                this.drawPencilPath(shape);
+                drawPencilPath(this.ctx, shape);
             } else if (shape.type === "arrow") {
-                this.drawArrow(shape.fromX, shape.fromY, shape.toX, shape.toY);
+                drawArrow(this.ctx, shape.fromX, shape.fromY, shape.toX, shape.toY, shape.lineWidth || this.strokeSize);
             }
             
             if (shape.selected) {
@@ -157,22 +106,6 @@ export class Game {
                 this.drawDeleteButton(shape);
             }
         });
-    }
-
-    private drawPencilPath(path: { points: Array<{ x: number, y: number }>, color: string }) {
-        this.ctx.strokeStyle = path.color;
-        this.ctx.lineWidth = path.lineWidth;
-        this.ctx.beginPath();
-        const points = path.points;
-        this.ctx.moveTo(points[0].x, points[0].y);
-        
-        for (let i = 1; i < points.length; i++) {
-            if (!points[i]) continue;
-            this.ctx.lineTo(points[i].x, points[i].y);
-        }
-        
-        this.ctx.stroke();
-        this.ctx.closePath();
     }
 
     private drawDeleteButton(shape: Shape) {
@@ -235,32 +168,6 @@ export class Game {
         }
     }
 
-    private isClickOnDeleteButton(x: number, y: number, shape: Shape): boolean {
-        let buttonX, buttonY;
-        
-        if (shape.type === "arrow") {
-            buttonX = shape.fromX;
-            buttonY = shape.fromY - 20; // 20 is buttonSize
-        } else if (shape.type === "rect") {
-            buttonX = shape.x + shape.width;
-            buttonY = shape.y;
-        } else if (shape.type === "circle") {
-            buttonX = shape.centerX + shape.radius;
-            buttonY = shape.centerY - shape.radius;
-        } else if (shape.type === "ellipse") {
-            buttonX = shape.centerX + shape.radiusX;
-            buttonY = shape.centerY - shape.radiusY;
-        } else if (shape.type === "pencil") {
-            const maxX = Math.max(...shape.points.map(p => p.x));
-            const minY = Math.min(...shape.points.map(p => p.y));
-            buttonX = maxX;
-            buttonY = minY;
-        }
-
-        const distance = Math.sqrt(Math.pow(x - buttonX, 2) + Math.pow(y - buttonY, 2));
-        return distance <= 10; // 10 is the radius of click detection
-    }
-
     mouseDownHandler = async (e: MouseEvent) => {
         const rect = this.canvas.getBoundingClientRect();
         const x = e.clientX - rect.left;
@@ -269,7 +176,7 @@ export class Game {
         // Only handle shape selection and deletion when pointer tool is selected
         if (this.selectedTool === "pointer") {
             const selectedShape = this.existingShapes.find(shape => shape.selected);
-            if (selectedShape && this.isClickOnDeleteButton(x, y, selectedShape)) {
+            if (selectedShape && isClickOnDeleteButton(x, y, selectedShape)) {
                 await this.deleteSelectedShape();
                 return;
             }
@@ -395,7 +302,7 @@ export class Game {
                 );
                 
                 if (distance > 5) { // Minimum distance threshold
-                    this.drawArrow(this.startX, this.startY, x, y);
+                    drawArrow(this.ctx, this.startX, this.startY, x, y, this.strokeSize);
                 }
             } else if (this.selectedTool === "rect") {
                 const width = x - this.startX;
@@ -420,7 +327,7 @@ export class Game {
             } else if (this.selectedTool === "pencil" && this.currentPencilPath) {
                 this.currentPencilPath.points.push({x, y});
                 this.clearCanvas();
-                this.drawPencilPath(this.currentPencilPath);
+                drawPencilPath(this.ctx, this.currentPencilPath);
             }
         }
     }
@@ -649,32 +556,5 @@ export class Game {
         const dx = x - xx;
         const dy = y - yy;
         return Math.sqrt(dx * dx + dy * dy);
-    }
-
-    private drawArrow(fromX: number, fromY: number, toX: number, toY: number) {
-        const arrowLength = Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2);
-        const arrowThickness = this.strokeSize;
-        const arrowHeadLength = arrowThickness * 3; // Made longer for pointier appearance
-        const arrowHeadAngle = Math.atan2(toY - fromY, toX - fromX);
-
-        // Draw main line
-        this.ctx.beginPath();
-        this.ctx.moveTo(fromX, fromY);
-        this.ctx.lineTo(toX, toY);
-
-        // Calculate arrow head points with sharper angle (PI/8 instead of PI/6)
-        const arrowX1 = toX - arrowHeadLength * Math.cos(arrowHeadAngle - Math.PI / 8);
-        const arrowY1 = toY - arrowHeadLength * Math.sin(arrowHeadAngle - Math.PI / 8);
-        const arrowX2 = toX - arrowHeadLength * Math.cos(arrowHeadAngle + Math.PI / 8);
-        const arrowY2 = toY - arrowHeadLength * Math.sin(arrowHeadAngle + Math.PI / 8);
-
-        // Draw arrow head
-        this.ctx.moveTo(toX, toY);
-        this.ctx.lineTo(arrowX1, arrowY1);
-        this.ctx.moveTo(toX, toY);
-        this.ctx.lineTo(arrowX2, arrowY2);
-
-        this.ctx.stroke();
-        this.ctx.closePath();
     }
 }
