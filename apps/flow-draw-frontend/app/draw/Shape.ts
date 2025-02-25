@@ -46,4 +46,15 @@ export type Shape = {
     toY: number;
     color?: string;
     lineWidth?: number;
+} | {
+    id: string;
+    selected?: boolean;
+    type: "text";
+    text: string;
+    x: number;
+    y: number;
+    fontSize: number;
+    fontFamily: string;
+    color?: string;
+    lineWidth?: number;
 };

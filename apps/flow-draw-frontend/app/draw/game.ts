@@ -27,8 +27,18 @@ export class Game {
     private readonly FPS: number = 30;
     private readonly frameInterval: number = 1000 / 30; // 33.33ms between frames
     private animationFrameId: number | null = null;
+    
+    // Add callbacks for text handling
+    onTextClick: ((x: number, y: number) => void) | null = null;
+    onStartText: ((x: number, y: number) => void) | null = null;
 
     socket: WebSocket;
+
+    // Add new properties for double-click handling
+    private lastClickTime: number = 0;
+    private readonly doubleClickThreshold: number = 300; // ms
+    private moveInProgress: boolean = false;
+    private originalShapePosition: any = null; // Store original position for cancel
 
     constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
         this.canvas = canvas;
@@ -52,7 +62,7 @@ export class Game {
         this.canvas.removeEventListener("mousemove", this.mouseMoveHandler);
     }
 
-    setTool(tool: "circle" | "pencil" | "rect" | "ellipse") {
+    setTool(tool: Tool) {
         this.selectedTool = tool;
     }
 
@@ -75,9 +85,13 @@ export class Game {
             this.ctx.strokeStyle = shape.color || this.strokeColor;
             
             if (shape.selected) {
-                this.ctx.save();
-                this.ctx.strokeStyle = '#00ff00';
-                this.ctx.lineWidth += 2;
+                // Draw selection outline with dashed lines
+                this.drawSelectionOutline(shape);
+                
+                // Add a "move in progress" indicator if applicable
+                if (this.moveInProgress) {
+                    this.drawMoveInProgressIndicator(shape);
+                }
             }
             
             if (shape.type === "rect") {
@@ -96,10 +110,12 @@ export class Game {
                 drawPencilPath(this.ctx, shape);
             } else if (shape.type === "arrow") {
                 drawArrow(this.ctx, shape.fromX, shape.fromY, shape.toX, shape.toY, shape.lineWidth || this.strokeSize);
-            }
-            
-            if (shape.selected) {
-                this.ctx.restore();
+            } else if (shape.type === "text") {
+                // Draw text with bold style
+                const fontSize = shape.fontSize;
+                this.ctx.font = `bold ${fontSize}px ${shape.fontFamily}`;
+                this.ctx.fillStyle = shape.color || this.strokeColor;
+                this.ctx.fillText(shape.text, shape.x, shape.y);
             }
             
             if (shape.selected) {
@@ -108,49 +124,145 @@ export class Game {
         });
     }
 
+    // Draw a dashed selection outline around the shape
+    private drawSelectionOutline(shape: Shape) {
+        this.ctx.save();
+        this.ctx.strokeStyle = '#4285f4'; // Google blue color
+        this.ctx.lineWidth = 2;
+        this.ctx.setLineDash([5, 5]); // Create dashed line
+        
+        let x, y, width, height;
+        
+        if (shape.type === "rect") {
+            x = shape.x;
+            y = shape.y;
+            width = shape.width;
+            height = shape.height;
+        } else if (shape.type === "circle") {
+            x = shape.centerX - shape.radius;
+            y = shape.centerY - shape.radius;
+            width = shape.radius * 2;
+            height = shape.radius * 2;
+        } else if (shape.type === "ellipse") {
+            x = shape.centerX - shape.radiusX;
+            y = shape.centerY - shape.radiusY;
+            width = shape.radiusX * 2;
+            height = shape.radiusY * 2;
+        } else if (shape.type === "pencil") {
+            const minX = Math.min(...shape.points.map(p => p.x));
+            const maxX = Math.max(...shape.points.map(p => p.x));
+            const minY = Math.min(...shape.points.map(p => p.y));
+            const maxY = Math.max(...shape.points.map(p => p.y));
+            x = minX;
+            y = minY;
+            width = maxX - minX;
+            height = maxY - minY;
+        } else if (shape.type === "arrow") {
+            const minX = Math.min(shape.fromX, shape.toX);
+            const maxX = Math.max(shape.fromX, shape.toX);
+            const minY = Math.min(shape.fromY, shape.toY);
+            const maxY = Math.max(shape.fromY, shape.toY);
+            x = minX;
+            y = minY;
+            width = maxX - minX;
+            height = maxY - minY;
+        } else if (shape.type === "text") {
+            this.ctx.font = `bold ${shape.fontSize}px ${shape.fontFamily}`;
+            const textWidth = this.ctx.measureText(shape.text).width;
+            const textHeight = shape.fontSize;
+            x = shape.x - 5;
+            y = shape.y - textHeight;
+            width = textWidth + 10;
+            height = textHeight + 10;
+        }
+        
+        // Add padding to the selection box
+        const padding = 5;
+        x -= padding;
+        y -= padding;
+        width += padding * 2;
+        height += padding * 2;
+        
+        this.ctx.strokeRect(x, y, width, height);
+        this.ctx.restore();
+    }
+
     private drawDeleteButton(shape: Shape) {
         if (shape.selected) {
             this.ctx.save();
             
-            // Draw X button
-            const buttonSize = 20;
+            // Calculate position for delete button
             let buttonX, buttonY;
+            let x, y, width, height;
             
-            if (shape.type === "arrow") {
-                buttonX = shape.fromX;
-                buttonY = shape.fromY - buttonSize;
-            } else if (shape.type === "rect") {
-                buttonX = shape.x + shape.width;
-                buttonY = shape.y;
+            if (shape.type === "rect") {
+                x = shape.x;
+                y = shape.y;
+                width = shape.width;
+                height = shape.height;
             } else if (shape.type === "circle") {
-                buttonX = shape.centerX + shape.radius;
-                buttonY = shape.centerY - shape.radius;
+                x = shape.centerX - shape.radius;
+                y = shape.centerY - shape.radius;
+                width = shape.radius * 2;
+                height = shape.radius * 2;
             } else if (shape.type === "ellipse") {
-                buttonX = shape.centerX + shape.radiusX;
-                buttonY = shape.centerY - shape.radiusY;
+                x = shape.centerX - shape.radiusX;
+                y = shape.centerY - shape.radiusY;
+                width = shape.radiusX * 2;
+                height = shape.radiusY * 2;
             } else if (shape.type === "pencil") {
+                const minX = Math.min(...shape.points.map(p => p.x));
                 const maxX = Math.max(...shape.points.map(p => p.x));
                 const minY = Math.min(...shape.points.map(p => p.y));
-                buttonX = maxX;
-                buttonY = minY;
+                const maxY = Math.max(...shape.points.map(p => p.y));
+                x = minX;
+                y = minY;
+                width = maxX - minX;
+                height = maxY - minY;
+            } else if (shape.type === "arrow") {
+                const minX = Math.min(shape.fromX, shape.toX);
+                const maxX = Math.max(shape.fromX, shape.toX);
+                const minY = Math.min(shape.fromY, shape.toY);
+                const maxY = Math.max(shape.fromY, shape.toY);
+                x = minX;
+                y = minY;
+                width = maxX - minX;
+                height = maxY - minY;
+            } else if (shape.type === "text") {
+                this.ctx.font = `bold ${shape.fontSize}px ${shape.fontFamily}`;
+                const textWidth = this.ctx.measureText(shape.text).width;
+                const textHeight = shape.fontSize;
+                x = shape.x - 5;
+                y = shape.y - textHeight;
+                width = textWidth + 10;
+                height = textHeight + 10;
             }
-
+            
+            // Position delete button at top-right corner
+            buttonX = x + width + 5;
+            buttonY = y - 5;
+            
+            // Draw delete button (circle with X)
+            const buttonSize = 16;
+            
             // Draw circle background
-            this.ctx.fillStyle = 'red';
+            this.ctx.fillStyle = '#f44336'; // Red background
             this.ctx.beginPath();
             this.ctx.arc(buttonX, buttonY, buttonSize/2, 0, Math.PI * 2);
             this.ctx.fill();
-
+            
             // Draw X
             this.ctx.strokeStyle = 'white';
             this.ctx.lineWidth = 2;
             this.ctx.beginPath();
-            this.ctx.moveTo(buttonX - 5, buttonY - 5);
-            this.ctx.lineTo(buttonX + 5, buttonY + 5);
-            this.ctx.moveTo(buttonX + 5, buttonY - 5);
-            this.ctx.lineTo(buttonX - 5, buttonY + 5);
+            // First line of X
+            this.ctx.moveTo(buttonX - buttonSize/4, buttonY - buttonSize/4);
+            this.ctx.lineTo(buttonX + buttonSize/4, buttonY + buttonSize/4);
+            // Second line of X
+            this.ctx.moveTo(buttonX + buttonSize/4, buttonY - buttonSize/4);
+            this.ctx.lineTo(buttonX - buttonSize/4, buttonY + buttonSize/4);
             this.ctx.stroke();
-
+            
             this.ctx.restore();
         }
     }
@@ -173,21 +285,58 @@ export class Game {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
+        // Handle text tool
+        if (this.selectedTool === "text") {
+            if (this.onStartText) {
+                this.onStartText(x, y);
+            }
+            return;
+        }
+        
         // Only handle shape selection and deletion when pointer tool is selected
         if (this.selectedTool === "pointer") {
+            const currentTime = performance.now();
+            const timeSinceLastClick = currentTime - this.lastClickTime;
+            this.lastClickTime = currentTime;
+            
             const selectedShape = this.existingShapes.find(shape => shape.selected);
+            
+            // Check if clicking on delete button
             if (selectedShape && isClickOnDeleteButton(x, y, selectedShape)) {
                 await this.deleteSelectedShape();
                 return;
             }
             
+            // Check for double-click on already selected shape
+            if (selectedShape && timeSinceLastClick < this.doubleClickThreshold && this.isPointInShape(x, y, selectedShape)) {
+                // Double-click detected - finalize the move
+                if (this.moveInProgress) {
+                    await this.finalizeMove(selectedShape);
+                    this.moveInProgress = false;
+                    this.originalShapePosition = null;
+                }
+                return;
+            }
+            
             const clickedShape = this.findShapeAtPoint(x, y);
             if (clickedShape) {
+                // If we're starting to move a new shape, finalize any previous move
+                if (selectedShape && this.moveInProgress && selectedShape.id !== clickedShape.id) {
+                    await this.finalizeMove(selectedShape);
+                }
+                
+                // Select the clicked shape
                 this.selectedShapeId = clickedShape.id;
                 this.existingShapes.forEach(shape => shape.selected = shape.id === clickedShape.id);
                 
                 // Set up dragging
                 this.isDragging = true;
+                this.moveInProgress = true;
+                
+                // Store original position for potential cancel
+                this.storeOriginalPosition(clickedShape);
+                
+                // Set drag offsets
                 if (clickedShape.type === "rect") {
                     this.dragOffsetX = x - clickedShape.x;
                     this.dragOffsetY = y - clickedShape.y;
@@ -199,22 +348,44 @@ export class Game {
                     const minY = Math.min(...clickedShape.points.map(p => p.y));
                     this.dragOffsetX = x - minX;
                     this.dragOffsetY = y - minY;
+                } else if (clickedShape.type === "arrow") {
+                    this.dragOffsetX = x - clickedShape.fromX;
+                    this.dragOffsetY = y - clickedShape.fromY;
+                } else if (clickedShape.type === "text") {
+                    this.dragOffsetX = x - clickedShape.x;
+                    this.dragOffsetY = y - clickedShape.y;
                 }
                 
                 this.clearCanvas();
                 return;
             } else {
+                // Finalize any in-progress move when clicking empty space
+                if (selectedShape && this.moveInProgress) {
+                    await this.finalizeMove(selectedShape);
+                }
+                
                 // Deselect all shapes when clicking empty space
                 this.existingShapes.forEach(shape => shape.selected = false);
                 this.selectedShapeId = null;
+                this.moveInProgress = false;
+                this.originalShapePosition = null;
                 this.clearCanvas();
             }
             return;
         }
         
         // Clear any selected shapes when using other tools
+        if (this.moveInProgress) {
+            const selectedShape = this.existingShapes.find(shape => shape.selected);
+            if (selectedShape) {
+                await this.finalizeMove(selectedShape);
+            }
+        }
+        
         this.existingShapes.forEach(shape => shape.selected = false);
         this.selectedShapeId = null;
+        this.moveInProgress = false;
+        this.originalShapePosition = null;
         
         // Original drawing logic
         if (this.selectedTool === "pencil") {
@@ -280,6 +451,10 @@ export class Game {
                             x: p.x + dx,
                             y: p.y + dy
                         }));
+                    } else if (selectedShape.type === "text") {
+                        // For text, simply update the x/y position
+                        selectedShape.x = x - this.dragOffsetX;
+                        selectedShape.y = y - this.dragOffsetY;
                     }
                     
                     this.existingShapes.push(selectedShape);
@@ -339,32 +514,13 @@ export class Game {
             this.animationFrameId = null;
         }
 
-        if (this.isDragging) {
-            const selectedShape = this.existingShapes.find(shape => shape.selected);
-            if (selectedShape) {
-                try {
-                    await deleteChat(selectedShape.id);
-                    
-                    const newShape = { ...selectedShape, id: crypto.randomUUID() };
-                    this.existingShapes = this.existingShapes.filter(shape => shape.id !== selectedShape.id);
-                    this.existingShapes.push(newShape);
-                    
-                    this.socket.send(JSON.stringify({
-                        type: "chat",
-                        message: JSON.stringify({ shape: newShape }),
-                        roomId: this.roomId
-                    }));
-                } catch (error) {
-                    console.error("Error updating shape position:", error);
-                }
-                
-                this.isDragging = false;
-                this.dragOffsetX = 0;
-                this.dragOffsetY = 0;
-                return;
-            }
+        // For pointer tool, just stop dragging but don't finalize the move yet
+        if (this.selectedTool === "pointer") {
+            this.isDragging = false;
+            return;
         }
 
+        // For other tools, proceed with original logic
         if (this.selectedTool === "pencil" && this.currentPencilPath) {
             this.currentPencilPath.lineWidth = this.strokeSize;
             this.currentPencilPath.id = crypto.randomUUID();
@@ -527,6 +683,19 @@ export class Game {
             // Check if point is near the arrow line
             const distance = this.pointToLineDistance(x, y, shape.fromX, shape.fromY, shape.toX, shape.toY);
             return distance < strokeThreshold;
+        } else if (shape.type === "text") {
+            // For text, check if point is within text bounds
+            this.ctx.font = `${shape.fontSize}px ${shape.fontFamily}`;
+            const textWidth = this.ctx.measureText(shape.text).width;
+            const textHeight = shape.fontSize;
+            
+            // Create a bounding box around the text
+            return (
+                x >= shape.x - strokeThreshold &&
+                x <= shape.x + textWidth + strokeThreshold &&
+                y >= shape.y - textHeight - strokeThreshold &&
+                y <= shape.y + strokeThreshold
+            );
         }
         return false;
     }
@@ -556,5 +725,140 @@ export class Game {
         const dx = x - xx;
         const dy = y - yy;
         return Math.sqrt(dx * dx + dy * dy);
+    }
+
+    // Update the addText method to create larger text
+    addText(text: string, x: number, y: number) {
+        if (!text.trim()) return;
+        
+        const textShape: Shape = {
+            id: crypto.randomUUID(),
+            type: "text",
+            text: text,
+            x: x,
+            y: y,
+            fontSize: this.strokeSize * 6, // Increased font size multiplier from 4 to 6
+            fontFamily: "Arial, sans-serif", // Changed to a more readable font
+            color: this.strokeColor,
+            lineWidth: this.strokeSize
+        };
+        
+        this.existingShapes.push(textShape);
+        this.socket.send(JSON.stringify({
+            type: "chat",
+            message: JSON.stringify({ shape: textShape }),
+            roomId: this.roomId
+        }));
+        
+        this.clearCanvas();
+    }
+
+    // Store the original position of a shape before moving
+    private storeOriginalPosition(shape: Shape) {
+        if (!this.originalShapePosition) {
+            if (shape.type === "rect") {
+                this.originalShapePosition = { x: shape.x, y: shape.y };
+            } else if (shape.type === "circle" || shape.type === "ellipse") {
+                this.originalShapePosition = { centerX: shape.centerX, centerY: shape.centerY };
+            } else if (shape.type === "pencil") {
+                this.originalShapePosition = { points: [...shape.points.map(p => ({...p}))] };
+            } else if (shape.type === "arrow") {
+                this.originalShapePosition = { 
+                    fromX: shape.fromX, fromY: shape.fromY,
+                    toX: shape.toX, toY: shape.toY 
+                };
+            } else if (shape.type === "text") {
+                this.originalShapePosition = { x: shape.x, y: shape.y };
+            }
+        }
+    }
+
+    // Finalize a move by sending the updated shape to the server
+    private async finalizeMove(shape: Shape) {
+        if (!this.moveInProgress) return;
+        
+        try {
+            await deleteChat(shape.id);
+            
+            const newShape = { ...shape, id: crypto.randomUUID() };
+            this.existingShapes = this.existingShapes.filter(s => s.id !== shape.id);
+            this.existingShapes.push(newShape);
+            
+            this.socket.send(JSON.stringify({
+                type: "chat",
+                message: JSON.stringify({ shape: newShape }),
+                roomId: this.roomId
+            }));
+            
+            this.moveInProgress = false;
+            this.originalShapePosition = null;
+        } catch (error) {
+            console.error("Error finalizing shape move:", error);
+            // Optionally revert to original position on error
+            this.revertToOriginalPosition(shape);
+        }
+    }
+
+    // Revert a shape to its original position (for error handling)
+    private revertToOriginalPosition(shape: Shape) {
+        if (!this.originalShapePosition) return;
+        
+        if (shape.type === "rect") {
+            shape.x = this.originalShapePosition.x;
+            shape.y = this.originalShapePosition.y;
+        } else if (shape.type === "circle" || shape.type === "ellipse") {
+            shape.centerX = this.originalShapePosition.centerX;
+            shape.centerY = this.originalShapePosition.centerY;
+        } else if (shape.type === "pencil") {
+            shape.points = [...this.originalShapePosition.points.map(p => ({...p}))];
+        } else if (shape.type === "arrow") {
+            shape.fromX = this.originalShapePosition.fromX;
+            shape.fromY = this.originalShapePosition.fromY;
+            shape.toX = this.originalShapePosition.toX;
+            shape.toY = this.originalShapePosition.toY;
+        } else if (shape.type === "text") {
+            shape.x = this.originalShapePosition.x;
+            shape.y = this.originalShapePosition.y;
+        }
+        
+        this.clearCanvas();
+    }
+
+    // Add a visual indicator that a move is in progress
+    private drawMoveInProgressIndicator(shape: Shape) {
+        this.ctx.save();
+        
+        // Draw a small indicator in the corner
+        this.ctx.fillStyle = '#4285f4'; // Google blue
+        this.ctx.font = '12px Arial';
+        
+        let x, y;
+        
+        if (shape.type === "rect") {
+            x = shape.x;
+            y = shape.y;
+        } else if (shape.type === "circle") {
+            x = shape.centerX - shape.radius;
+            y = shape.centerY - shape.radius;
+        } else if (shape.type === "ellipse") {
+            x = shape.centerX - shape.radiusX;
+            y = shape.centerY - shape.radiusY;
+        } else if (shape.type === "pencil") {
+            const minX = Math.min(...shape.points.map(p => p.x));
+            const minY = Math.min(...shape.points.map(p => p.y));
+            x = minX;
+            y = minY;
+        } else if (shape.type === "arrow") {
+            x = Math.min(shape.fromX, shape.toX);
+            y = Math.min(shape.fromY, shape.toY);
+        } else if (shape.type === "text") {
+            x = shape.x;
+            y = shape.y - shape.fontSize;
+        }
+        
+        // Draw a small "moving" indicator
+        this.ctx.fillText("Double-click to place", x, y - 10);
+        
+        this.ctx.restore();
     }
 }

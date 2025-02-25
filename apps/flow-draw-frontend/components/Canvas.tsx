@@ -91,7 +91,7 @@ export function Canvas({
                     position: 'absolute',
                     left: textPosition.x,
                     top: textPosition.y,
-                    border: '1px dotted white',
+                    border: '1px dotted #4285f4',
                     minWidth: '200px',
                     minHeight: '40px',
                     padding: '8px'
@@ -108,9 +108,10 @@ export function Canvas({
                             color: strokeColor,
                             resize: 'none',
                             width: '100%',
-                            fontSize: `${strokeSize * 4}px`,
-                            fontFamily: 'Brush Script MT, cursive',
-                            lineHeight: '1.2'
+                            fontSize: `${strokeSize * 6}px`,
+                            fontFamily: 'Arial, sans-serif',
+                            lineHeight: '1.2',
+                            fontWeight: 'bold'
                         }}
                     />
                 </div>
