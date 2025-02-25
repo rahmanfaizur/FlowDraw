@@ -7,7 +7,7 @@ import { SketchPicker, ColorResult } from 'react-color';
 import { useRouter } from "next/navigation";
 
 
-export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer";
+export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer" | "arrow" | "text";
 
 export function Canvas({
     roomId,
@@ -26,6 +26,10 @@ export function Canvas({
     const [strokeSize, setStrokeSize] = useState<number>(initialStrokeSize);
     const [strokeColor, setStrokeColor] = useState<string>("#ffffff");
     const [showColorPicker, setShowColorPicker] = useState<boolean>(false);
+    const [textInputPosition, setTextInputPosition] = useState<{x: number, y: number} | null>(null);
+    const [isTyping, setIsTyping] = useState<boolean>(false);
+    const [currentText, setCurrentText] = useState<string>("");
+    const [textPosition, setTextPosition] = useState<{x: number, y: number}>({ x: 0, y: 0 });
 
     useEffect(() => {
         game?.setTool(selectedTool);
@@ -44,6 +48,18 @@ export function Canvas({
             const g = new Game(canvasRef.current, roomId, socket);
             setGame(g);
 
+            const handleTextClick = (x: number, y: number) => {
+                setTextInputPosition({ x, y });
+            };
+
+            g.onTextClick = handleTextClick;
+
+            g.onStartText = (x: number, y: number) => {
+                setIsTyping(true);
+                setTextPosition({ x, y });
+                setCurrentText("");
+            };
+
             return () => {
                 g.destroy();
             }
@@ -56,9 +72,49 @@ export function Canvas({
         setStrokeColor(rgba);
     };
 
+    const handleTextKeyDown = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            if (currentText.trim() && game) {
+                game.addText(currentText, textPosition.x, textPosition.y);
+                setIsTyping(false);
+                setCurrentText("");
+            }
+        }
+    };
+
     return (
         <div style={{ height: "100vh", overflow: "hidden", position: "relative" }}>
             <canvas ref={canvasRef} width={size.width || "2000"} height={size.height || "1000"} />
+            {isTyping && (
+                <div style={{
+                    position: 'absolute',
+                    left: textPosition.x,
+                    top: textPosition.y,
+                    border: '1px dotted white',
+                    minWidth: '200px',
+                    minHeight: '40px',
+                    padding: '8px'
+                }}>
+                    <textarea
+                        value={currentText}
+                        onChange={(e) => setCurrentText(e.target.value)}
+                        onKeyDown={handleTextKeyDown}
+                        autoFocus
+                        style={{
+                            background: 'transparent',
+                            border: 'none',
+                            outline: 'none',
+                            color: strokeColor,
+                            resize: 'none',
+                            width: '100%',
+                            fontSize: `${strokeSize * 4}px`,
+                            fontFamily: 'Brush Script MT, cursive',
+                            lineHeight: '1.2'
+                        }}
+                    />
+                </div>
+            )}
             <TopBar 
                 setSelectedTool={setSelectedTool} 
                 selectedTool={selectedTool} 

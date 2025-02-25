@@ -49,7 +49,7 @@ type Shape = {
     toY: number;
     color?: string;
     lineWidth?: number;
-}
+};
 
 export class Game {
     private canvas: HTMLCanvasElement;
