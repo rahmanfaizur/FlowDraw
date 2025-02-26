@@ -3,7 +3,7 @@ import { getAllRooms, getRoomBySlug, getRoomId } from "@/services/authService";
 import { useRouter } from "next/navigation";
 import Card from "./Card";
 import { CustomButton } from "./CustomButton";
-import { Button, ButtonVariant } from "./Button";
+import Navbar from "./Navbar";
 
 export function Dashboard() {
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -51,19 +51,11 @@ export function Dashboard() {
         }
     };
 
-    function logoutUser() {
-        localStorage.removeItem("token");
-        router.push("/signin");
-    }
-
     return (
         <div className="bg-my-custom text-white p-8 w-full h-full">
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">Flow Draw</h1>
-                <Button onClick={logoutUser} variant={ButtonVariant.RED}>Logout</Button>
-            </div>
+            <Navbar />
             <div className="flex justify-start items-center mb-8">
-            <div className="bg-gray-800/50 border-2 border-dashed border-gray-600 rounded-lg p-6 backdrop-blur-sm">
+                <div className="bg-gray-800/50 border-2 border-dashed border-gray-600 rounded-lg p-6 backdrop-blur-sm">
                     <h2 className="text-2xl font-bold text-white mb-4">Create Room</h2>
                     <input
                         type="text"

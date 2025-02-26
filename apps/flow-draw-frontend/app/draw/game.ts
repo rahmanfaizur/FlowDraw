@@ -857,7 +857,7 @@ export class Game {
         }
         
         // Draw a small "moving" indicator
-        this.ctx.fillText("Double-click to place", x, y - 10);
+        this.ctx.fillText("Click to place", x, y - 10);
         
         this.ctx.restore();
     }

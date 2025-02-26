@@ -5,5 +5,9 @@ import { useState } from "react";
 
 export default function DashboardPage() {
     const [roomId, setRoomId] = useState<string | null>(null)
-    return <Dashboard roomId={roomId} setRoomId={setRoomId}/>;
+    return (
+        <div className="bg-my-custom text-white w-screen h-screen">
+            <Dashboard roomId={roomId} setRoomId={setRoomId}/>
+        </div>
+    )
 }
