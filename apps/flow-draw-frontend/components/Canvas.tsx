@@ -5,6 +5,8 @@ import { ArrowUp10Icon, ArrowUpIcon, CircleIcon, EggIcon, EllipsisIcon, EraserIc
 import { Game } from "@/app/draw/game";
 import { SketchPicker, ColorResult } from 'react-color';
 import { useRouter } from "next/navigation";
+import { IconButtonSet } from "./IconButtonSet";
+import { ToolbarButtons } from "./ToolbarButtons";
 
 
 export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer" | "arrow" | "text";
@@ -152,18 +154,16 @@ function TopBar({ selectedTool, setSelectedTool, setShowStrokeSize, setShowColor
     function goToDashboard() {
         router.push('/dashboard');
     }
+    
     return (
         <div className="absolute top-4 left-4 flex space-x-2">
-            <IconButton onClick={goToDashboard} icon={<HomeIcon/>}></IconButton>
-            <IconButton onClick={() => { setSelectedTool("pencil") }} activated={selectedTool === "pencil"} icon={<Pencil/>}></IconButton>
-            <IconButton onClick={() => { setSelectedTool("rect") }} activated={selectedTool === "rect"} icon={<RectangleHorizontalIcon/>}></IconButton>
-            <IconButton onClick={() => { setSelectedTool("circle") }} activated={selectedTool === "circle"} icon={<CircleIcon/>}></IconButton>
-            <IconButton onClick={() => { setSelectedTool("ellipse") }} activated={selectedTool === "ellipse"} icon={<EggIcon/>}></IconButton>
-            <IconButton onClick={() => setShowStrokeSize(prev => !prev)} activated={false} icon={<EllipsisIcon/>}></IconButton>
-            <IconButton onClick={() => setShowColorPicker(prev => !prev)} activated={false} icon={<Palette/>}></IconButton>
-            <IconButton onClick={() => { setSelectedTool("pointer") }} activated={selectedTool === "pointer"} icon={<PointerIcon/>}></IconButton>
-            <IconButton onClick={() => { setSelectedTool("arrow") }} activated={selectedTool === "arrow"} icon={<ArrowUpIcon/>}></IconButton>
-            <IconButton onClick={() => { setSelectedTool("text") }} activated={selectedTool === "text"} icon={<LetterText/>}></IconButton>
+            <ToolbarButtons
+                selectedTool={selectedTool}
+                setSelectedTool={setSelectedTool}
+                setShowStrokeSize={setShowStrokeSize}
+                setShowColorPicker={setShowColorPicker}
+                onHomeClick={goToDashboard}
+            />
         </div>
     );
 }

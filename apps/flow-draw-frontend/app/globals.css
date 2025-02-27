@@ -32,4 +32,6 @@
    animation-delay: 0.4s;
  }
 
- 
+ .icon-button {
+  transition: all 0.2s ease-in-out;
+}

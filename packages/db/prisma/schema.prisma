@@ -44,4 +44,5 @@ model Chat {
   userId String
   room Room @relation(fields: [roomId], references: [id])
   user User @relation(fields: [userId], references: [id])
+
 }
