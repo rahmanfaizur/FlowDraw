@@ -55,6 +55,17 @@ export function getShapeBounds(shape: Shape): { x: number, y: number, width: num
         width: shape.text.length * (shape.fontSize * 0.6) + 10, // Rough estimate
         height: shape.fontSize + 10
       };
+    case "line":
+      const lineMinX = Math.min(shape.fromX, shape.toX);
+      const lineMaxX = Math.max(shape.fromX, shape.toX);
+      const lineMinY = Math.min(shape.fromY, shape.toY);
+      const lineMaxY = Math.max(shape.fromY, shape.toY);
+      return {
+        x: lineMinX,
+        y: lineMinY,
+        width: lineMaxX - lineMinX,
+        height: lineMaxY - lineMinY
+      };
   }
 }
 
@@ -152,6 +163,9 @@ export function isPointInShape(x: number, y: number, shape: Shape, strokeThresho
         y >= bounds.y - strokeThreshold &&
         y <= bounds.y + bounds.height + strokeThreshold
       );
+
+    case "line":
+      return pointToLineDistance(x, y, shape.fromX, shape.fromY, shape.toX, shape.toY) < strokeThreshold;
   }
 }
 
@@ -183,6 +197,8 @@ export function getDragOffset(
       return { offsetX: x - shape.fromX, offsetY: y - shape.fromY };
     case "text":
       return { offsetX: x - shape.x, offsetY: y - shape.y };
+    case "line":
+      return { offsetX: x - shape.fromX, offsetY: y - shape.fromY };
   }
 }
 
@@ -218,6 +234,14 @@ export function updateShapePosition(shape: Shape, newX: number, newY: number, of
     case "text":
       shape.x = newX - offsetX;
       shape.y = newY - offsetY;
+      break;
+    case "line":
+      const dx = newX - offsetX - shape.fromX;
+      const dy = newY - offsetY - shape.fromY;
+      shape.fromX += dx;
+      shape.fromY += dy;
+      shape.toX += dx;
+      shape.toY += dy;
       break;
   }
 } 

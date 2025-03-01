@@ -11,6 +11,8 @@ import {
     PointerIcon,
     ArrowUpIcon,
     LetterText,
+    PenLineIcon,
+    SlashIcon,
 } from "lucide-react";
 
 interface ToolbarButtonsProps {
@@ -88,6 +90,12 @@ export function ToolbarButtons({
                 onClick={() => setSelectedTool("text")}
                 activated={selectedTool === "text"}
                 icon={<LetterText />}
+                className="hover:bg-blue-50"
+            />
+            <IconButton
+                onClick={() => setSelectedTool("line")}
+                activated={selectedTool === "line"}
+                icon={<SlashIcon />}
                 className="hover:bg-blue-50"
             />
         </>

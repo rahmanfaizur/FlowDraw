@@ -2,7 +2,7 @@
 export type Shape = {
     id: string;
     selected?: boolean;
-    type: "rect" | "circle" | "pencil" | "ellipse" | "arrow";
+    type: "rect" | "circle" | "pencil" | "ellipse" | "arrow" | "line";
     x: number;
     y: number;
     width: number;
@@ -55,6 +55,16 @@ export type Shape = {
     y: number;
     fontSize: number;
     fontFamily: string;
+    color?: string;
+    lineWidth?: number;
+} | {
+    id: string;
+    selected?: boolean;
+    type: "line";
+    fromX: number;
+    fromY: number;
+    toX: number;
+    toY: number;
     color?: string;
     lineWidth?: number;
 };

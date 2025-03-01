@@ -47,6 +47,15 @@ export function isClickOnDeleteButton(x: number, y: number, shape: Shape): boole
         shapeY = shape.y - fontSize;
         width = textWidth + 10;
         height = fontSize + 10;
+    } else if (shape.type === "line") {
+        const minX = Math.min(shape.fromX, shape.toX);
+        const maxX = Math.max(shape.fromX, shape.toX);
+        const minY = Math.min(shape.fromY, shape.toY);
+        const maxY = Math.max(shape.fromY, shape.toY);
+        shapeX = minX;
+        shapeY = minY;
+        width = maxX - minX;
+        height = maxY - minY;
     }
     
     // Position delete button at top-right corner with padding

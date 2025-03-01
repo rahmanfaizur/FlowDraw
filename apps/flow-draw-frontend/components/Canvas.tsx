@@ -9,7 +9,7 @@ import { IconButtonSet } from "./IconButtonSet";
 import { ToolbarButtons } from "./ToolbarButtons";
 
 
-export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer" | "arrow" | "text";
+export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer" | "arrow" | "text" | "line";
 
 export function Canvas({
     roomId,

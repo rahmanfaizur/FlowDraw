@@ -43,3 +43,60 @@ export function drawPencilPath(ctx: CanvasRenderingContext2D, path: { points: Ar
     ctx.stroke();
     ctx.closePath();
 }
+
+export function drawLine(ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number, color?: string, lineWidth?: number) {
+    ctx.save();
+    
+    if (color) ctx.strokeStyle = color;
+    if (lineWidth) ctx.lineWidth = lineWidth;
+    
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    ctx.lineTo(toX, toY);
+    ctx.stroke();
+    ctx.closePath();
+    
+    ctx.restore();
+}
+
+export function drawShape(ctx: CanvasRenderingContext2D, shape: Shape) {
+    switch (shape.type) {
+        case "rect":
+            ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
+            break;
+        case "circle":
+            ctx.beginPath();
+            ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.closePath();
+            break;
+        case "ellipse":
+            ctx.beginPath();
+            ctx.ellipse(shape.centerX, shape.centerY, shape.radiusX, shape.radiusY, shape.rotation, 0, 2 * Math.PI);
+            ctx.stroke();
+            ctx.closePath();
+            break;
+        case "pencil":
+            drawPencilPath(ctx, shape);
+            break;
+        case "arrow":
+            drawArrow(ctx, shape.fromX, shape.fromY, shape.toX, shape.toY, shape.lineWidth || 2);
+            break;
+        case "text":
+            ctx.font = `${shape.fontSize}px ${shape.fontFamily}`;
+            ctx.fillStyle = shape.color || '#000000';
+            ctx.fillText(shape.text, shape.x, shape.y);
+            break;
+        case "line":
+            drawLine(
+                ctx,
+                shape.fromX,
+                shape.fromY,
+                shape.toX,
+                shape.toY,
+                shape.color || '#000000',
+                shape.lineWidth || 2
+            );
+            break;
+    }
+}

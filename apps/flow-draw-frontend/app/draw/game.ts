@@ -3,7 +3,7 @@ import { Tool } from "@/components/Canvas";
 import { getExistingShapes } from "./http";
 import { deleteChat } from "@/services/authService";
 import { Shape } from './Shape';
-import { drawArrow, drawPencilPath } from './CanvasUtils';
+import { drawArrow, drawPencilPath, drawLine } from './CanvasUtils';
 import { handleSocketMessage } from './SocketHandler';
 import { isClickOnDeleteButton } from './MouseHandler';
 
@@ -94,7 +94,17 @@ export class Game {
                 }
             }
             
-            if (shape.type === "rect") {
+            if (shape.type === "line") {
+                drawLine(
+                    this.ctx,
+                    shape.fromX,
+                    shape.fromY,
+                    shape.toX,
+                    shape.toY,
+                    shape.color,
+                    shape.lineWidth
+                );
+            } else if (shape.type === "rect") {
                 this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
             } else if (shape.type === "circle") {
                 this.ctx.beginPath();
@@ -133,7 +143,16 @@ export class Game {
         
         let x, y, width, height;
         
-        if (shape.type === "rect") {
+        if (shape.type === "line") {
+            const minX = Math.min(shape.fromX, shape.toX);
+            const maxX = Math.max(shape.fromX, shape.toX);
+            const minY = Math.min(shape.fromY, shape.toY);
+            const maxY = Math.max(shape.fromY, shape.toY);
+            x = minX;
+            y = minY;
+            width = maxX - minX;
+            height = maxY - minY;
+        } else if (shape.type === "rect") {
             x = shape.x;
             y = shape.y;
             width = shape.width;
@@ -195,7 +214,16 @@ export class Game {
             let buttonX, buttonY;
             let x, y, width, height;
             
-            if (shape.type === "rect") {
+            if (shape.type === "line") {
+                const minX = Math.min(shape.fromX, shape.toX);
+                const maxX = Math.max(shape.fromX, shape.toX);
+                const minY = Math.min(shape.fromY, shape.toY);
+                const maxY = Math.max(shape.fromY, shape.toY);
+                x = minX;
+                y = minY;
+                width = maxX - minX;
+                height = maxY - minY;
+            } else if (shape.type === "rect") {
                 x = shape.x;
                 y = shape.y;
                 width = shape.width;
@@ -420,16 +448,14 @@ export class Game {
         if (this.selectedTool === "pointer" && this.isDragging) {
             const selectedShape = this.existingShapes.find(shape => shape.selected);
             if (selectedShape) {
-                // Cancel any existing animation frame
                 if (this.animationFrameId) {
                     cancelAnimationFrame(this.animationFrameId);
                 }
 
-                // Schedule the update on the next animation frame
                 this.animationFrameId = requestAnimationFrame(() => {
                     this.existingShapes = this.existingShapes.filter(shape => !shape.selected);
                     
-                    if (selectedShape.type === "arrow") {
+                    if (selectedShape.type === "line") {
                         const dx = x - this.dragOffsetX - selectedShape.fromX;
                         const dy = y - this.dragOffsetY - selectedShape.fromY;
                         selectedShape.fromX += dx;
@@ -468,8 +494,19 @@ export class Game {
         if (this.clicked) {
             this.clearCanvas();
             this.ctx.strokeStyle = this.strokeColor;
+            this.ctx.lineWidth = this.strokeSize;
             
-            if (this.selectedTool === "arrow") {
+            if (this.selectedTool === "line") {
+                drawLine(
+                    this.ctx,
+                    this.startX,
+                    this.startY,
+                    x,
+                    y,
+                    this.strokeColor,
+                    this.strokeSize
+                );
+            } else if (this.selectedTool === "arrow") {
                 // Only draw arrow if there's some minimum distance
                 const distance = Math.sqrt(
                     Math.pow(x - this.startX, 2) + 
@@ -537,7 +574,27 @@ export class Game {
             const y = e.clientY - rect.top;
 
             let shape: Shape | null = null;
-            if (this.selectedTool === "arrow") {
+
+            if (this.selectedTool === "line") {
+                // Only create line if there's some minimum distance
+                const distance = Math.sqrt(
+                    Math.pow(x - this.startX, 2) + 
+                    Math.pow(y - this.startY, 2)
+                );
+                
+                if (distance > 5) { // Minimum distance threshold
+                    shape = {
+                        id: crypto.randomUUID(),
+                        type: "line",
+                        fromX: this.startX,
+                        fromY: this.startY,
+                        toX: x,
+                        toY: y,
+                        color: this.strokeColor,
+                        lineWidth: this.strokeSize
+                    };
+                }
+            } else if (this.selectedTool === "arrow") {
                 const distance = Math.sqrt(
                     Math.pow(x - this.startX, 2) + 
                     Math.pow(y - this.startY, 2)
@@ -598,13 +655,18 @@ export class Game {
             }
             
             if (shape) {
-                shape.lineWidth = this.strokeSize;
+                // Add the shape to existing shapes
                 this.existingShapes.push(shape);
+                
+                // Send to backend via socket
                 this.socket.send(JSON.stringify({
                     type: "chat",
                     message: JSON.stringify({ shape }),
                     roomId: this.roomId
                 }));
+
+                // Redraw canvas to show the new shape
+                this.clearCanvas();
             }
         }
         this.clicked = false;
@@ -637,7 +699,10 @@ export class Game {
     private isPointInShape(x: number, y: number, shape: Shape): boolean {
         const strokeThreshold = (shape.lineWidth || this.strokeSize) / 2 + 2;
 
-        if (shape.type === "rect") {
+        if (shape.type === "line") {
+            // Check if point is near the line
+            return this.pointToLineDistance(x, y, shape.fromX, shape.fromY, shape.toX, shape.toY) < strokeThreshold;
+        } else if (shape.type === "rect") {
             // Check if point is near any of the four edges
             const left = shape.x;
             const right = shape.x + shape.width;
@@ -756,7 +821,14 @@ export class Game {
     // Store the original position of a shape before moving
     private storeOriginalPosition(shape: Shape) {
         if (!this.originalShapePosition) {
-            if (shape.type === "rect") {
+            if (shape.type === "line") {
+                this.originalShapePosition = {
+                    fromX: shape.fromX,
+                    fromY: shape.fromY,
+                    toX: shape.toX,
+                    toY: shape.toY
+                };
+            } else if (shape.type === "rect") {
                 this.originalShapePosition = { x: shape.x, y: shape.y };
             } else if (shape.type === "circle" || shape.type === "ellipse") {
                 this.originalShapePosition = { centerX: shape.centerX, centerY: shape.centerY };
@@ -803,7 +875,12 @@ export class Game {
     private revertToOriginalPosition(shape: Shape) {
         if (!this.originalShapePosition) return;
         
-        if (shape.type === "rect") {
+        if (shape.type === "line") {
+            shape.fromX = this.originalShapePosition.fromX;
+            shape.fromY = this.originalShapePosition.fromY;
+            shape.toX = this.originalShapePosition.toX;
+            shape.toY = this.originalShapePosition.toY;
+        } else if (shape.type === "rect") {
             shape.x = this.originalShapePosition.x;
             shape.y = this.originalShapePosition.y;
         } else if (shape.type === "circle" || shape.type === "ellipse") {
@@ -834,7 +911,10 @@ export class Game {
         
         let x, y;
         
-        if (shape.type === "rect") {
+        if (shape.type === "line") {
+            x = Math.min(shape.fromX, shape.toX);
+            y = Math.min(shape.fromY, shape.toY);
+        } else if (shape.type === "rect") {
             x = shape.x;
             y = shape.y;
         } else if (shape.type === "circle") {
