@@ -313,6 +313,20 @@ export class Game {
         const x = e.clientX - rect.left;
         const y = e.clientY - rect.top;
         
+        if (this.selectedTool === "eraser") {
+            const shapeToErase = this.findShapeAtPoint(x, y);
+            if (shapeToErase) {
+                try {
+                    await deleteChat(shapeToErase.id);
+                    this.existingShapes = this.existingShapes.filter(shape => shape.id !== shapeToErase.id);
+                    this.clearCanvas();
+                } catch (error) {
+                    console.error("Error deleting shape:", error);
+                }
+            }
+            return;
+        }
+        
         // Handle text tool
         if (this.selectedTool === "text") {
             if (this.onStartText) {
@@ -433,6 +447,27 @@ export class Game {
     }
 
     mouseMoveHandler = (e: MouseEvent) => {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Handle cursor changes for eraser and pointer tools
+        if (this.selectedTool === "eraser" || this.selectedTool === "pointer") {
+            const shapeUnderCursor = this.findShapeAtPoint(x, y);
+            if (shapeUnderCursor) {
+                if (this.selectedTool === "eraser") {
+                    this.canvas.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="8" stroke="white" stroke-width="2" fill="none"/></svg>') 0 24, auto`;
+                } else { // pointer tool
+                    this.canvas.style.cursor = this.isDragging ? 'grabbing' : 'grab';
+                }
+            } else {
+                this.canvas.style.cursor = 'default';
+            }
+            
+            // If it's eraser tool, return early as we don't need drag handling
+            if (this.selectedTool === "eraser") return;
+        }
+
         const currentTime = performance.now();
         const elapsed = currentTime - this.lastFrameTime;
 
@@ -440,9 +475,20 @@ export class Game {
         
         this.lastFrameTime = currentTime;
 
-        const rect = this.canvas.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+        // Add eraser hover detection
+        if (this.selectedTool === "eraser") {
+            const shapeUnderCursor = this.findShapeAtPoint(x, y);
+            if (shapeUnderCursor) {
+                this.canvas.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="8" stroke="white" stroke-width="2" fill="none"/></svg>') 0 24, auto`;
+            } else {
+                this.canvas.style.cursor = 'default';
+            }
+            return;
+        }
+
+        if (this.selectedTool === "pencil") {
+            this.canvas.style.cursor = `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>') 0 24, auto`;
+        }
 
         // Only handle dragging when pointer tool is selected
         if (this.selectedTool === "pointer" && this.isDragging) {
@@ -455,7 +501,7 @@ export class Game {
                 this.animationFrameId = requestAnimationFrame(() => {
                     this.existingShapes = this.existingShapes.filter(shape => !shape.selected);
                     
-                    if (selectedShape.type === "line") {
+                    if (selectedShape.type === "line" || selectedShape.type === "arrow") {
                         const dx = x - this.dragOffsetX - selectedShape.fromX;
                         const dy = y - this.dragOffsetY - selectedShape.fromY;
                         selectedShape.fromX += dx;

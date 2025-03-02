@@ -13,6 +13,7 @@ import {
     LetterText,
     PenLineIcon,
     SlashIcon,
+    EraserIcon,
 } from "lucide-react";
 
 interface ToolbarButtonsProps {
@@ -31,7 +32,7 @@ export function ToolbarButtons({
     onHomeClick,
 }: ToolbarButtonsProps) {
     return (
-        <>
+        <div className="flex flex-wrap gap-1">
             <IconButton
                 onClick={onHomeClick}
                 icon={<HomeIcon />}
@@ -98,6 +99,12 @@ export function ToolbarButtons({
                 icon={<SlashIcon />}
                 className="hover:bg-blue-50"
             />
-        </>
+            <IconButton
+                onClick={() => setSelectedTool("eraser")}
+                activated={selectedTool === "eraser"}
+                icon={<EraserIcon />}
+                className="hover:bg-blue-50"
+            />
+        </div>
     );
 } 

@@ -5,11 +5,10 @@ import { ArrowUp10Icon, ArrowUpIcon, CircleIcon, EggIcon, EllipsisIcon, EraserIc
 import { Game } from "@/app/draw/game";
 import { SketchPicker, ColorResult } from 'react-color';
 import { useRouter } from "next/navigation";
-import { IconButtonSet } from "./IconButtonSet";
 import { ToolbarButtons } from "./ToolbarButtons";
 
 
-export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer" | "arrow" | "text" | "line";
+export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer" | "arrow" | "text" | "line" | "eraser";
 
 export function Canvas({
     roomId,
@@ -32,6 +31,7 @@ export function Canvas({
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const [currentText, setCurrentText] = useState<string>("");
     const [textPosition, setTextPosition] = useState<{x: number, y: number}>({ x: 0, y: 0 });
+    const [isGrabbing, setIsGrabbing] = useState<boolean>(false);
 
     useEffect(() => {
         game?.setTool(selectedTool);
@@ -85,9 +85,26 @@ export function Canvas({
         }
     };
 
+    const getCursor = () => {
+        return "default";
+    };
+
     return (
-        <div style={{ height: "100vh", overflow: "hidden", position: "relative" }}>
-            <canvas ref={canvasRef} width={size.width || "2000"} height={size.height || "1000"} />
+        <div style={{ 
+            height: "100vh", 
+            overflow: "hidden", 
+            position: "relative",
+            cursor: getCursor()
+        }}
+        >
+            <canvas 
+                ref={canvasRef} 
+                width={size.width || "2000"} 
+                height={size.height || "1000"}
+                style={{
+                    cursor: getCursor()
+                }}
+            />
             {isTyping && (
                 <div style={{
                     position: 'absolute',
