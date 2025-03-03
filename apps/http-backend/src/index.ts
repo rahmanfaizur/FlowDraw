@@ -14,6 +14,12 @@ app.use(express.json());
 
 app.use(cors())
 
+app.get("/api/v1/healthcheck", (req: Request, res: Response) => {
+    res.json({
+        message: "Server is running!"
+    });
+});
+
 //routes
 app.post('/api/v1/signup', async (req: Request, res: Response) => {
     try {
@@ -246,6 +252,10 @@ app.get("/api/v1/slug/:roomId", async (req, res) => {
 
 
 
-app.listen(3001, () => {
-    console.log("connected to port 3001!");
+// app.listen(3001, () => {
+//     console.log("connected to port 3001!");
+// });
+
+app.listen(3001, '0.0.0.0', () => {
+    console.log('Server running on port 3001');
 });
