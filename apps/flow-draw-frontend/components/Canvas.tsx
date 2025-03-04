@@ -1,7 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { useWindowSize } from "@uidotdev/usehooks";
-import { IconButton } from "./IconButton";
-import { ArrowUp10Icon, ArrowUpIcon, CircleIcon, EggIcon, EllipsisIcon, EraserIcon, HomeIcon, LetterText, LetterTextIcon, Palette, Pencil, PointerIcon, RectangleHorizontalIcon, TextIcon } from "lucide-react";
 import { Game } from "@/app/draw/game";
 import { SketchPicker, ColorResult } from 'react-color';
 import { useRouter } from "next/navigation";

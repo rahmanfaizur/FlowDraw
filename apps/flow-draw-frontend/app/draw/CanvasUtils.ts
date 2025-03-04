@@ -2,7 +2,7 @@
 import { Shape } from './Shape';
 
 export function drawArrow(ctx: CanvasRenderingContext2D, fromX: number, fromY: number, toX: number, toY: number, strokeSize: number) {
-    const arrowLength = Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2);
+    // const arrowLength = Math.sqrt((toX - fromX) ** 2 + (toY - fromY) ** 2);
     const arrowThickness = strokeSize;
     const arrowHeadLength = arrowThickness * 3; // Made longer for pointier appearance
     const arrowHeadAngle = Math.atan2(toY - fromY, toX - fromX);
