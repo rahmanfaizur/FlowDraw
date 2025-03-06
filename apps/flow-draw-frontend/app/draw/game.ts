@@ -38,6 +38,7 @@ export class Game {
     private lastClickTime: number = 0;
     private readonly doubleClickThreshold: number = 300; // ms
     private moveInProgress: boolean = false;
+    //@ts-ignore
     private originalShapePosition: any = null; // Store original position for cancel
 
     constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {

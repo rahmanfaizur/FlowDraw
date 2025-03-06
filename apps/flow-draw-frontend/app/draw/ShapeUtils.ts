@@ -1,4 +1,4 @@
-import { Shape, ShapeType } from './Shape';
+import { Shape } from './Shape';
 
 // Get the bounding box of any shape
 export function getShapeBounds(shape: Shape): { x: number, y: number, width: number, height: number } {
@@ -174,6 +174,7 @@ export function cloneShape(shape: Shape): Shape {
   const clone = { ...shape };
   
   if (shape.type === "pencil") {
+    //@ts-ignore
     (clone as any).points = [...shape.points.map(p => ({...p}))];
   }
   
