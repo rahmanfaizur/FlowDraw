@@ -38,11 +38,10 @@ export class Game {
     private lastClickTime: number = 0;
     private readonly doubleClickThreshold: number = 300; // ms
     private moveInProgress: boolean = false;
-    //@ts-ignore
-    private originalShapePosition: any = null; // Store original position for cancel
+    private originalShapePosition: { x: number; y: number } | null = null;
 
     constructor(canvas: HTMLCanvasElement, roomId: string, socket: WebSocket) {
-        this.canvas = canvas;
+        this.canvas = canvas;  
         this.ctx = canvas.getContext("2d")!;
         this.existingShapes = [];
         this.roomId = roomId;
@@ -212,8 +211,10 @@ export class Game {
             this.ctx.save();
             
             // Calculate position for delete button
-            let buttonX, buttonY;
+            let buttonX = 0;
+            let buttonY = 0;
             let x, y, width, height;
+            console.log(height);
             
             if (shape.type === "line") {
                 const minX = Math.min(shape.fromX, shape.toX);

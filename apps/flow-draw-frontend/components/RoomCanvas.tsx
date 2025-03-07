@@ -8,6 +8,7 @@ export function RoomCanvas({roomId} : {roomId : string}) {
     const [socket, setSocket] = useState<WebSocket | null>(null);
     const [strokeSize, setStrokeSize] = useState<number>(5); // Add stroke size state
     const router = useRouter(); // Initialize useRouter
+    console.log(setStrokeSize);
 
     // Check for token and redirect if not found
     useEffect(() => {

@@ -168,18 +168,29 @@ export function isPointInShape(x: number, y: number, shape: Shape, strokeThresho
       return pointToLineDistance(x, y, shape.fromX, shape.fromY, shape.toX, shape.toY) < strokeThreshold;
   }
 }
+interface BaseShape {
+  id: string;
+  type: string;
+}
 
-// Clone a shape (deep copy)
+interface PencilShape extends BaseShape {
+  type: "pencil";
+  points: { x: number; y: number }[];
+}
+
+type Shape = PencilShape; // Add other shape types like Rectangle, Circle, etc.
+
 export function cloneShape(shape: Shape): Shape {
   const clone = { ...shape };
-  
+
   if (shape.type === "pencil") {
-    //@ts-ignore
-    (clone as any).points = [...shape.points.map(p => ({...p}))];
+    (clone as PencilShape).points = [...shape.points.map(p => ({ ...p }))];
   }
-  
+
   return clone;
 }
+
+
 
 // Get drag offset for a shape
 export function getDragOffset(

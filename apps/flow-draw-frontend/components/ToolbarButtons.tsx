@@ -11,7 +11,6 @@ import {
     PointerIcon,
     ArrowUpIcon,
     LetterText,
-    PenLineIcon,
     SlashIcon,
     EraserIcon,
 } from "lucide-react";

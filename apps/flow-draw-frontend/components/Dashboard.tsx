@@ -5,7 +5,9 @@ import Card from "./Card";
 import { CustomButton } from "./CustomButton";
 import Navbar from "./Navbar";
 
-export function Dashboard() {
+export function Dashboard({ roomId, setRoomId }: { roomId: string | null; setRoomId: (id: string) => void }) {
+    console.log(roomId);
+    console.log(setRoomId);
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [rooms, setRooms] = useState<Room[]>([]);
     const router = useRouter();

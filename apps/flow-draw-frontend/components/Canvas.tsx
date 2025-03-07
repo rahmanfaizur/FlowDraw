@@ -29,7 +29,9 @@ export function Canvas({
     const [isTyping, setIsTyping] = useState<boolean>(false);
     const [currentText, setCurrentText] = useState<string>("");
     const [textPosition, setTextPosition] = useState<{x: number, y: number}>({ x: 0, y: 0 });
-    const [isGrabbing, setIsGrabbing] = useState<boolean>(false);
+    // const [isGrabbing, setIsGrabbing] = useState<boolean>(false);
+
+    console.log(textInputPosition);
 
     useEffect(() => {
         game?.setTool(selectedTool);
@@ -64,7 +66,7 @@ export function Canvas({
                 g.destroy();
             }
         }
-    }, [canvasRef]);
+    }, [canvasRef, roomId, socket]);
 
     const handleColorChange = (color: ColorResult) => {
         const { r, g, b, a } = color.rgb;
