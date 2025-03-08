@@ -4,7 +4,7 @@ import { ArrowRight, Brush, Share2, Sparkles, Users2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import Loader from '../components/Loader'; // Import the Loader component
-import Image from "next/image";
+// import Image from "next/image";
 
 
 export default function Home() {
@@ -99,7 +99,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 z-10 relative">
         <div className="relative rounded-xl overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-tr from-yellow-500/10 via-pink-500/10 to-purple-500/10"></div>
-          <Image
+          <img
             src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?auto=format&fit=crop&w=2000&q=80"
             alt="FlowDraw Interface Preview"
             width={2000} // Adjust width based on your needs

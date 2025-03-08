@@ -7,7 +7,7 @@ import PasswordInput from "./PasswordInput";
 import { Button, ButtonSize, ButtonVariant } from "./Button";
 import { signup, signin } from "../services/authService";
 import axios from "axios";
-import Image from "next/image";
+// import Image from "next/image";
 
 export function AuthPage({isSignin} : {
     isSignin: boolean
@@ -86,7 +86,7 @@ export function AuthPage({isSignin} : {
 
     return (
         <div className="relative w-screen h-screen">
-            <Image
+            <img
                 src="https://images-ext-1.discordapp.net/external/qHXpUeuF_BMPWcn4js1oGMoD2pqIL2vRjLkzfh50bUE/https/files.shapes.inc/35ab4225.png?format=webp&quality=lossless&width=1211&height=681"
                 alt=""
                 className="w-full h-full object-cover"
