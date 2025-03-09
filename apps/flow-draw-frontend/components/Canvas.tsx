@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ToolbarButtons } from "./ToolbarButtons";
 
 
-export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer" | "arrow" | "text" | "line" | "eraser";
+export type Tool = "circle" | "rect" | "pencil" | "ellipse" | "pointer" | "arrow" | "text" | "line" | "eraser" | "stroke" | "pallete";
 
 export function Canvas({
     roomId,
