@@ -4,8 +4,10 @@ import { useRouter } from "next/navigation";
 import Card from "./Card";
 import { CustomButton } from "./CustomButton";
 import Navbar from "./Navbar";
+import { useWindowSize } from "@uidotdev/usehooks";
 
 export function Dashboard({ roomId, setRoomId }: { roomId: string | null; setRoomId: (id: string) => void }) {
+    const size = useWindowSize();
     console.log(roomId);
     console.log(setRoomId);
     const inputRef = useRef<HTMLInputElement | null>(null);
@@ -46,6 +48,7 @@ export function Dashboard({ roomId, setRoomId }: { roomId: string | null; setRoo
                     alert('Room name exists, Try with a new room name! Or join the existing room!');
                     return;
                 }
+                // console.log(`Routing to ${roomId}!`);
                 router.push(`/canvas/${id}`);
             } catch (error) {
                 console.error("Error getting room ID:", error);
@@ -54,7 +57,7 @@ export function Dashboard({ roomId, setRoomId }: { roomId: string | null; setRoo
     };
 
     return (
-        <div className="bg-my-custom text-white p-8 w-full h-full">
+        <div className={`bg-my-custom text-white p-8 w-${size.width} h-${size.height}`}>
             <Navbar />
             <div className="flex justify-start items-center mb-8">
                 <div className="bg-gray-800/50 border-2 border-dashed border-gray-600 rounded-lg p-6 backdrop-blur-sm">
