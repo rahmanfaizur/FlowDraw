@@ -5,8 +5,10 @@ import Card from "./Card";
 import { CustomButton } from "./CustomButton";
 import Navbar from "./Navbar";
 import { useWindowSize } from "@uidotdev/usehooks";
+import GeneralPopup from "./GeneralPopup";
 
 export function Dashboard({ roomId, setRoomId }: { roomId: string | null; setRoomId: (id: string) => void }) {
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
     const size = useWindowSize();
     console.log(roomId);
     console.log(setRoomId);
@@ -45,7 +47,7 @@ export function Dashboard({ roomId, setRoomId }: { roomId: string | null; setRoo
             try {
                 const id = await getRoomId(requestBody);
                 if (!id) {
-                    alert('Room name exists, Try with a new room name! Or join the existing room!');
+                    setIsPopupOpen(true);
                     return;
                 }
                 // console.log(`Routing to ${roomId}!`);
@@ -59,6 +61,14 @@ export function Dashboard({ roomId, setRoomId }: { roomId: string | null; setRoo
     return (
         <div className={`bg-my-custom text-white p-8 w-${size.width} h-${size.height}`}>
             <Navbar />
+
+            {isPopupOpen && (
+                    <GeneralPopup 
+                    header="Room name exists, Try with a new room name! Or join the existing room!"
+                    onClose={() => setIsPopupOpen(false)}
+                    />
+                )}
+            
             <div className="flex justify-start items-center mb-8">
                 <div className="bg-gray-800/50 border-2 border-dashed border-gray-600 rounded-lg p-6 backdrop-blur-sm">
                     <h2 className="text-2xl font-bold text-white mb-4">Create Room</h2>
@@ -73,7 +83,7 @@ export function Dashboard({ roomId, setRoomId }: { roomId: string | null; setRoo
                     </CustomButton>
                 </div>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {/* Existing Rooms */}
                 {rooms.map((room) => (

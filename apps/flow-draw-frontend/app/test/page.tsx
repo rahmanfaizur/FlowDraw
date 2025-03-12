@@ -1,11 +1,11 @@
 "use client"
 
-import { ColorWheel } from "@/components/ColorPicker"
+// import DeletePopup from "@/components/DeletePopup"
 
 export default function Test() {
   return (
     <div>
-      <ColorWheel></ColorWheel>
+      {/* <DeletePopup></DeletePopup> */}
     </div>
   )
 }

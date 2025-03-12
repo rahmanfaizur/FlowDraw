@@ -1,6 +1,7 @@
 import { deleteRoom, getRoomBySlug } from "@/services/authService";
 import { TrashIcon } from "lucide-react";
-import React from "react";
+import React, { useState } from "react";
+import GeneralPopup from "./GeneralPopup";
 
 interface CardProps {
     title: string;
@@ -8,7 +9,7 @@ interface CardProps {
     onDelete: () => void;
 }
 
-async function deleteRoomLogic(title: string, onDelete: () => void) {
+export async function deleteRoomLogic(title: string, onDelete: () => void) {
     try {
         console.log('Attempting to delete room with title:', title);
         
@@ -31,12 +32,14 @@ async function deleteRoomLogic(title: string, onDelete: () => void) {
 }
 
 const Card: React.FC<CardProps> = ({ title, onJoin, onDelete }) => {
+    const [isPopupOpen, setIsPopupOpen] = useState(false);
     return (
         <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6 backdrop-blur-sm hover:bg-gray-800/70 transition-all duration-300 group">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold text-white group-hover:text-blue-400 transition-colors">{title}</h2>
                 <div 
-                    onClick={() => void deleteRoomLogic(title, onDelete)} 
+                    // onClick={() => void deleteRoomLogic(title, onDelete)}
+                    onClick={() => setIsPopupOpen(true)} 
                     className="cursor-pointer text-gray-400 hover:text-red-500 transition-colors"
                 >
                     <TrashIcon size={20} />
@@ -48,6 +51,17 @@ const Card: React.FC<CardProps> = ({ title, onJoin, onDelete }) => {
             >
                 Join
             </button>
+
+            {/* Render the DeletePopup when isPopupOpen is true! */}
+            {isPopupOpen && (
+                <GeneralPopup
+                header="Do you want to delete the room?"
+                buttonOneText="Yes"
+                buttonTwoText="No"
+                title={title}
+                onDelete={onDelete}
+                onClose={() => setIsPopupOpen(false)}/>
+            )}
         </div>
     );
 };

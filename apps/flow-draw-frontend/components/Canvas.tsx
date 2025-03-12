@@ -142,7 +142,7 @@ export function Canvas({
                 setShowColorPicker={setShowColorPicker}
             />
             {showStrokeSize && (
-                <input 
+                <input
                     type="range" 
                     min="1" 
                     max="20" 
