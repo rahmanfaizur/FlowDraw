@@ -1,11 +1,12 @@
-"use client"
-
-// import DeletePopup from "@/components/DeletePopup"
-
-export default function Test() {
+import Image from 'next/image'
+ 
+export default function Page() {
   return (
-    <div>
-      {/* <DeletePopup></DeletePopup> */}
-    </div>
+    <Image
+      src=""
+      width={500}
+      height={500}
+      alt="Picture of the author"
+    />
   )
 }

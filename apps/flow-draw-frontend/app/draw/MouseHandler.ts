@@ -1,27 +1,27 @@
 import { Shape } from './Shape';
 
 export function isClickOnDeleteButton(x: number, y: number, shape: Shape): boolean {
-    let shapeX, shapeY, width;
+    let shapeX = 0, shapeY = 0, width = 0;
 
     if (shape.type === "rect") {
         shapeX = shape.x;
         shapeY = shape.y;
         width = shape.width;
-    } else if (shape.type === "circle") {
+    } else if (shape.type === "circle" && 'centerX' in shape) {
         shapeX = shape.centerX - shape.radius;
         shapeY = shape.centerY - shape.radius;
         width = shape.radius * 2;
-    } else if (shape.type === "ellipse") {
+    } else if (shape.type === "ellipse" && 'centerX' in shape) {
         shapeX = shape.centerX - shape.radiusX;
         shapeY = shape.centerY - shape.radiusY;
         width = shape.radiusX * 2;
-    } else if (shape.type === "pencil") {
+    } else if (shape.type === "pencil" && 'points' in shape) {
         const minX = Math.min(...shape.points.map(p => p.x));
         const maxX = Math.max(...shape.points.map(p => p.x));
         shapeX = minX;
         shapeY = Math.min(...shape.points.map(p => p.y));
         width = maxX - minX;
-    } else if (shape.type === "arrow") {
+    } else if (shape.type === "arrow" && 'fromX' in shape) {
         const minX = Math.min(shape.fromX, shape.toX);
         const maxX = Math.max(shape.fromX, shape.toX);
         shapeX = minX;
@@ -33,7 +33,7 @@ export function isClickOnDeleteButton(x: number, y: number, shape: Shape): boole
         shapeX = shape.x - 5;
         shapeY = shape.y - fontSize;
         width = textWidth + 10;
-    } else if (shape.type === "line") {
+    } else if (shape.type === "line" && 'fromX' in shape) {
         const minX = Math.min(shape.fromX, shape.toX);
         const maxX = Math.max(shape.fromX, shape.toX);
         shapeX = minX;

@@ -7,6 +7,9 @@ import PasswordInput from "./PasswordInput";
 import { Button, ButtonSize, ButtonVariant } from "./Button";
 import { signup, signin } from "../services/authService";
 import axios from "axios";
+import Image from "next/image";
+import { useWindowSize } from "@uidotdev/usehooks";
+// import { SignalZero } from "lucide-react";
 // import Image from "next/image";
 
 export function AuthPage({isSignin} : {
@@ -19,6 +22,7 @@ export function AuthPage({isSignin} : {
     const passwordRef = useRef<HTMLInputElement>(null);
     const usernameRef = useRef<HTMLInputElement>(null);
     const router = useRouter();
+    const size = useWindowSize();
 
     const handleSubmit = async () => {
         try {
@@ -86,8 +90,10 @@ export function AuthPage({isSignin} : {
 
     return (
         <div className="relative w-screen h-screen">
-            <img
-                src="https://images-ext-1.discordapp.net/external/qHXpUeuF_BMPWcn4js1oGMoD2pqIL2vRjLkzfh50bUE/https/files.shapes.inc/35ab4225.png?format=webp&quality=lossless&width=1211&height=681"
+            <Image
+                src="https://res.cloudinary.com/dvsbdjslb/image/upload/v1741892988/35ab4225-1.jpg"
+                width={size.width ?? "1920"}
+                height={size.height ?? "1080"}
                 alt=""
                 className="w-full h-full object-cover"
             />

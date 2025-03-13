@@ -140,6 +140,8 @@ export function Canvas({
                 selectedTool={selectedTool} 
                 setShowStrokeSize={setShowStrokeSize}
                 setShowColorPicker={setShowColorPicker}
+                showColorPicker={showColorPicker}
+                showStrokeSize={showStrokeSize}
             />
             {showStrokeSize && (
                 <input
@@ -160,11 +162,13 @@ export function Canvas({
     );
 }
 
-function TopBar({ selectedTool, setSelectedTool, setShowStrokeSize, setShowColorPicker } : {
+function TopBar({ selectedTool, setSelectedTool, setShowStrokeSize, setShowColorPicker, showColorPicker, showStrokeSize } : {
     selectedTool: Tool,
     setSelectedTool: (s: Tool) => void,
     setShowStrokeSize: (show: boolean) => void,
-    setShowColorPicker: (show: boolean) => void
+    setShowColorPicker: (show: boolean) => void,
+    showStrokeSize: boolean,
+    showColorPicker: boolean;
 }) {
     const router = useRouter();
 
@@ -177,7 +181,9 @@ function TopBar({ selectedTool, setSelectedTool, setShowStrokeSize, setShowColor
             <ToolbarButtons
                 selectedTool={selectedTool}
                 setSelectedTool={setSelectedTool}
+                showStrokeSize={showStrokeSize}  // ✅ Added missing prop
                 setShowStrokeSize={setShowStrokeSize}
+                showColorPicker={showColorPicker}  // ✅ Added missing prop
                 setShowColorPicker={setShowColorPicker}
                 onHomeClick={goToDashboard}
             />

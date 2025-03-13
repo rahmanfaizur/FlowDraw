@@ -18,7 +18,9 @@ import {
 interface ToolbarButtonsProps {
     selectedTool: Tool;
     setSelectedTool: (tool: Tool) => void;
+    showStrokeSize: boolean;
     setShowStrokeSize: (show: boolean) => void;
+    showColorPicker: boolean;
     setShowColorPicker: (show: boolean) => void;
     onHomeClick: () => void;
 }
@@ -26,7 +28,9 @@ interface ToolbarButtonsProps {
 export function ToolbarButtons({
     selectedTool,
     setSelectedTool,
+    showStrokeSize,
     setShowStrokeSize,
+    showColorPicker,
     setShowColorPicker,
     onHomeClick,
 }: ToolbarButtonsProps) {
@@ -63,13 +67,13 @@ export function ToolbarButtons({
                 className="hover:bg-blue-50"
             />
             <IconButton
-                onClick={() => setShowStrokeSize((prev) => !prev)}
+                onClick={() => setShowStrokeSize(!showStrokeSize)}
                 activated={false}
                 icon={<EllipsisIcon />}
                 className="hover:bg-blue-50"
             />
             <IconButton
-                onClick={() => setShowColorPicker((prev) => !prev)}
+                onClick={() => setShowColorPicker(!showColorPicker)}
                 activated={false}
                 icon={<Palette />}
                 className="hover:bg-blue-50"
@@ -106,4 +110,4 @@ export function ToolbarButtons({
             />
         </div>
     );
-} 
+}

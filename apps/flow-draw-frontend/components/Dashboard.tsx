@@ -13,6 +13,7 @@ export function Dashboard({ roomId, setRoomId }: { roomId: string | null; setRoo
     console.log(roomId);
     console.log(setRoomId);
     const inputRef = useRef<HTMLInputElement | null>(null);
+    //@ts-expect-error: cant find rooms hence need a fix!
     const [rooms, setRooms] = useState<Room[]>([]);
     const router = useRouter();
 

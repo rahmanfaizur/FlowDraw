@@ -73,12 +73,13 @@ export function drawShape(ctx: CanvasRenderingContext2D, shape: Shape) {
             }
             break;
         case "ellipse":
-            ctx.beginPath();
-            //@ts-expect-error
-            ctx.ellipse(shape.centerX, shape.centerY, shape.radiusX, shape.radiusY, shape.rotation, 0, 2 * Math.PI);
-            ctx.stroke();
-            ctx.closePath();
-            break;
+            if ('centerX' in shape) {
+                ctx.beginPath();
+                ctx.ellipse(shape.centerX, shape.centerY, shape.radiusX, shape.radiusY, shape.rotation, 0, 2 * Math.PI);
+                ctx.stroke();
+                ctx.closePath();
+                break;
+            }
         case "pencil":
             if ("points" in shape)
             drawPencilPath(ctx, shape);
