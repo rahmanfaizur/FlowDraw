@@ -1,5 +1,5 @@
 import express from "express";
-import bcrypt, { hash } from "bcrypt";
+import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { createUserSchema, signInSchema, roomQuerySchema} from "@repo/common/commonPackages";
 import userMiddleware from "./middleware";
@@ -257,6 +257,6 @@ app.get("/api/v1/slug/:roomId", async (req, res) => {
 //     console.log("connected to port 3001!");
 // });
 
-app.listen(3001, '0.0.0.0', () => {
+app.listen(3001, () => {
     console.log('Server running on port 3001');
 });
