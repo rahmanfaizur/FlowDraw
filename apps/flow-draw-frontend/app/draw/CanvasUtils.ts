@@ -65,21 +65,26 @@ export function drawShape(ctx: CanvasRenderingContext2D, shape: Shape) {
             ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
             break;
         case "circle":
+            if ("centerX" in shape) {
             ctx.beginPath();
             ctx.arc(shape.centerX, shape.centerY, shape.radius, 0, Math.PI * 2);
             ctx.stroke();
             ctx.closePath();
+            }
             break;
         case "ellipse":
             ctx.beginPath();
+            //@ts-expect-error
             ctx.ellipse(shape.centerX, shape.centerY, shape.radiusX, shape.radiusY, shape.rotation, 0, 2 * Math.PI);
             ctx.stroke();
             ctx.closePath();
             break;
         case "pencil":
+            if ("points" in shape)
             drawPencilPath(ctx, shape);
             break;
         case "arrow":
+            if ('fromX' in shape)
             drawArrow(ctx, shape.fromX, shape.fromY, shape.toX, shape.toY, shape.lineWidth || 2);
             break;
         case "text":
@@ -88,6 +93,7 @@ export function drawShape(ctx: CanvasRenderingContext2D, shape: Shape) {
             ctx.fillText(shape.text, shape.x, shape.y);
             break;
         case "line":
+            if ('fromX' in shape)
             drawLine(
                 ctx,
                 shape.fromX,

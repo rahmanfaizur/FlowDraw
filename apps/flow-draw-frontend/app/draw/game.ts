@@ -94,7 +94,7 @@ export class Game {
                 }
             }
             
-            if (shape.type === "line") {
+            if (shape.type === "line" && 'fromX' in shape) {
                 drawLine(
                     this.ctx,
                     shape.fromX,
@@ -106,19 +106,19 @@ export class Game {
                 );
             } else if (shape.type === "rect") {
                 this.ctx.strokeRect(shape.x, shape.y, shape.width, shape.height);
-            } else if (shape.type === "circle") {
+            } else if (shape.type === "circle" && "centerX" in shape) {
                 this.ctx.beginPath();
                 this.ctx.arc(shape.centerX, shape.centerY, Math.abs(shape.radius), 0, Math.PI * 2);
                 this.ctx.stroke();
                 this.ctx.closePath();
-            } else if (shape.type === "ellipse") {
+            } else if (shape.type === "ellipse" && "centerX" in shape) {
                 this.ctx.beginPath();
                 this.ctx.ellipse(shape.centerX, shape.centerY, shape.radiusX, shape.radiusY, shape.rotation, 0, 2 * Math.PI);
                 this.ctx.stroke();
                 this.ctx.closePath();
-            } else if (shape.type === "pencil") {
+            } else if (shape.type === "pencil" && "points" in shape) {
                 drawPencilPath(this.ctx, shape);
-            } else if (shape.type === "arrow") {
+            } else if (shape.type === "arrow" && "fromX" in shape) {
                 drawArrow(this.ctx, shape.fromX, shape.fromY, shape.toX, shape.toY, shape.lineWidth || this.strokeSize);
             } else if (shape.type === "text") {
                 // Draw text with bold style
@@ -141,9 +141,9 @@ export class Game {
         this.ctx.lineWidth = 2;
         this.ctx.setLineDash([5, 5]); // Create dashed line
         
-        let x, y, width, height;
+        let x = 0, y = 0, width = 0, height = 0;
         
-        if (shape.type === "line") {
+        if (shape.type === "line" && "fromX" in shape) {
             const minX = Math.min(shape.fromX, shape.toX);
             const maxX = Math.max(shape.fromX, shape.toX);
             const minY = Math.min(shape.fromY, shape.toY);
@@ -157,17 +157,17 @@ export class Game {
             y = shape.y;
             width = shape.width;
             height = shape.height;
-        } else if (shape.type === "circle") {
+        } else if (shape.type === "circle" && 'centerX' in shape) {
             x = shape.centerX - shape.radius;
             y = shape.centerY - shape.radius;
             width = shape.radius * 2;
             height = shape.radius * 2;
-        } else if (shape.type === "ellipse") {
+        } else if (shape.type === "ellipse" && 'centerX' in shape) {
             x = shape.centerX - shape.radiusX;
             y = shape.centerY - shape.radiusY;
             width = shape.radiusX * 2;
             height = shape.radiusY * 2;
-        } else if (shape.type === "pencil") {
+        } else if (shape.type === "pencil" && "points" in shape) {
             const minX = Math.min(...shape.points.map(p => p.x));
             const maxX = Math.max(...shape.points.map(p => p.x));
             const minY = Math.min(...shape.points.map(p => p.y));
@@ -176,7 +176,7 @@ export class Game {
             y = minY;
             width = maxX - minX;
             height = maxY - minY;
-        } else if (shape.type === "arrow") {
+        } else if (shape.type === "arrow" && 'fromX' in shape) {
             const minX = Math.min(shape.fromX, shape.toX);
             const maxX = Math.max(shape.fromX, shape.toX);
             const minY = Math.min(shape.fromY, shape.toY);
@@ -213,10 +213,10 @@ export class Game {
             // Calculate position for delete button
             let buttonX = 0;
             let buttonY = 0;
-            let x, y, width, height;
+            let x = 0, y = 0, width = 0, height = 0;
             console.log(height);
             
-            if (shape.type === "line") {
+            if (shape.type === "line" && 'fromX' in shape) {
                 const minX = Math.min(shape.fromX, shape.toX);
                 const maxX = Math.max(shape.fromX, shape.toX);
                 const minY = Math.min(shape.fromY, shape.toY);
@@ -230,17 +230,17 @@ export class Game {
                 y = shape.y;
                 width = shape.width;
                 height = shape.height;
-            } else if (shape.type === "circle") {
+            } else if (shape.type === "circle" && 'centerX' in shape) {
                 x = shape.centerX - shape.radius;
                 y = shape.centerY - shape.radius;
                 width = shape.radius * 2;
                 height = shape.radius * 2;
-            } else if (shape.type === "ellipse") {
+            } else if (shape.type === "ellipse" && 'centerX' in shape) {
                 x = shape.centerX - shape.radiusX;
                 y = shape.centerY - shape.radiusY;
                 width = shape.radiusX * 2;
                 height = shape.radiusY * 2;
-            } else if (shape.type === "pencil") {
+            } else if (shape.type === "pencil" && "points" in shape) {
                 const minX = Math.min(...shape.points.map(p => p.x));
                 const maxX = Math.max(...shape.points.map(p => p.x));
                 const minY = Math.min(...shape.points.map(p => p.y));
@@ -249,7 +249,7 @@ export class Game {
                 y = minY;
                 width = maxX - minX;
                 height = maxY - minY;
-            } else if (shape.type === "arrow") {
+            } else if (shape.type === "arrow" && 'fromX' in shape) {
                 const minX = Math.min(shape.fromX, shape.toX);
                 const maxX = Math.max(shape.fromX, shape.toX);
                 const minY = Math.min(shape.fromY, shape.toY);
@@ -387,7 +387,7 @@ export class Game {
                 } else if (clickedShape.type === "circle" || clickedShape.type === "ellipse") {
                     this.dragOffsetX = x - clickedShape.centerX;
                     this.dragOffsetY = y - clickedShape.centerY;
-                } else if (clickedShape.type === "pencil") {
+                } else if (clickedShape.type === "pencil" && 'points' in shape) {
                     const minX = Math.min(...clickedShape.points.map(p => p.x));
                     const minY = Math.min(...clickedShape.points.map(p => p.y));
                     this.dragOffsetX = x - minX;
